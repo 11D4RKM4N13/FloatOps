@@ -1,6 +1,6 @@
 # Definición de Requerimientos — FloatOps
 
-> Versión: 0.2
+> Versión: 0.6
 > Fecha: 07/08/2026
 > Autor: Edwin Suares
 > Estado: Borrador
@@ -26,8 +26,9 @@ El proyecto está en etapa temprana: se cuenta con wireframes validados (11 pant
 | A03 | Técnico | Humano | Acceso limitado desde la vista móvil: consulta su orden asignada, actualiza checklist, adjunta fotos y notas. |
 | A04 | Job programado | Automático | Proceso interno que evalúa condiciones (orden atrasada, stock bajo) y dispara notificaciones. |
 | A05 | Proveedor de identidad (Keycloak) | Externo | Servicio de autenticación y autorización (OIDC) que valida credenciales y roles. |
-| A06 | Cliente | Humano / Organización | Empresa (con flota) o persona natural que solicita cotización y trae su vehículo al taller para reparación o mantenimiento. No hay evidencia de que tenga acceso directo al sistema — se asume que la interacción es presencial/telefónica y el despachador registra sus datos, no un login propio. ❓ A confirmar si en una fase futura se requiere un portal de autoservicio para el cliente. |
-| A07 | Facturación | Externo | API de facturación electrónica (DIAN).
+| A06 | Cliente | Humano / Organización | Empresa (con su flota) o persona natural que solicita cotización y trae su vehículo al taller para reparación o mantenimiento, ya sea acercándose al establecimiento o por otro medio de comunicación (ej. teléfono). ✅ Confirmado: no requiere login ni acceso directo al sistema — sus datos son registrados por el despachador. |
+| A07 | Facturación | Externo | API de facturación electrónica (DIAN). |
+| A08 | Proveedor de notificaciones | Externo | Servicios de envío de email y WhatsApp (ej. WhatsApp Business API) usados para notificar a los usuarios. |
 
 **Notas:**
 - Administrador y Despachador son actores primarios del panel; Técnico es actor primario de la vista móvil.
@@ -38,13 +39,24 @@ El proyecto está en etapa temprana: se cuenta con wireframes validados (11 pant
 
 ## 3. Requerimientos funcionales
 
+Agrupados por módulo, en el mismo orden usado en `README.md`. Los IDs (`RF-XXX`) se conservan sin cambios para no romper referencias cruzadas entre documentos.
+
+### 3.1 Panel
+
 | ID | Nombre | Descripción | Actor(es) | Prioridad | Criterios de aceptación |
 |----|--------|-------------|-----------|-----------|--------------------------|
-| RF-001 | Inicio de sesión con roles | El sistema debe permitir iniciar sesión y restringir el acceso a módulos/acciones según el rol del usuario. | Administrador, Despachador, Técnico | Alta | - Login vía Keycloak/OIDC<br>- El técnico solo ve sus órdenes asignadas en la vista móvil |
 | RF-002 | Consultar panel de KPIs | El sistema debe mostrar en el panel principal los indicadores de vehículos pendientes, órdenes abiertas y total de flota. | Despachador, Administrador | Alta | - Muestra conteos actualizados<br>- Incluye tabla de "vehículos que requieren servicio" |
 | RF-003 | Navegar a detalle desde el panel | El sistema debe permitir navegar al detalle de un vehículo o de una orden haciendo clic desde el panel. | Despachador, Administrador | Alta | - Clic en fila de vehículo abre su perfil<br>- Clic en fila de orden abre su detalle |
-| RF-004 | Tablero kanban de órdenes | El sistema debe mostrar las órdenes de trabajo agrupadas por etapa: Requiere atención, Programado, En taller, Completados. | Despachador, Administrador | Alta | - Cada columna muestra el conteo de órdenes |
+
+### 3.2 Órdenes de trabajo
+
+| ID | Nombre | Descripción | Actor(es) | Prioridad | Criterios de aceptación |
+|----|--------|-------------|-----------|-----------|--------------------------|
+| RF-004 | Tablero kanban de órdenes | El sistema debe mostrar las órdenes de trabajo agrupadas por etapa. Las etapas son configurables (ver RF-035) — no son fijas. | Despachador, Administrador | Alta | - Cada columna muestra el conteo de órdenes<br>- Refleja las etapas definidas en la configuración vigente |
 | RF-005 | Mover orden entre etapas (drag & drop) | El sistema debe permitir cambiar la etapa de una orden arrastrándola entre columnas del kanban. | Despachador, Administrador | Alta | - El cambio de etapa se persiste al soltar la tarjeta<br>- Se dispara notificación (RF-026) y auditoría (RF-027) |
+| RF-031 | Actualizar etapa desde el detalle de la orden | El sistema debe permitir cambiar la etapa de una orden mediante un botón/selector en la pantalla de detalle, como alternativa al drag & drop del kanban. | Despachador, Administrador | Alta | - Dispara la misma notificación (RF-026) y auditoría (RF-027) que el cambio vía kanban |
+| RF-032 | Reasignar técnico en cualquier etapa | El sistema debe permitir reasignar el técnico de una orden en cualquier etapa de su ciclo de vida, no solo al crearla. | Despachador, Administrador | Alta | - Restringido por rol: solo Despachador o Administrador pueden reasignar; el Técnico no<br>- Dispara notificación (RF-026) y auditoría (RF-027) |
+| RF-033 | Registrar aprobación del cliente sobre la cotización | El sistema debe permitir registrar si el cliente aprobó la cotización (presupuesto) de la orden. | Despachador, Administrador | Alta | ⚠️ Como el cliente no tiene acceso al sistema (confirmado previamente), la aprobación se registra manualmente por el despachador tras confirmarla con el cliente (presencial/telefónica). A confirmar si el paso a la etapa "En taller" debe bloquearse hasta que la cotización esté aprobada |
 | RF-006 | Crear orden de trabajo (modal rápido) | El sistema debe permitir crear una orden desde un modal con vehículo, tipo de servicio, descripción, prioridad y fecha programada. | Despachador, Administrador | Alta | - Todos los campos marcados obligatorios se validan antes de guardar |
 | RF-007 | Crear orden de trabajo (formulario completo) | El sistema debe ofrecer un formulario completo de creación de orden que incluya selección de repuestos desde el catálogo. | Despachador, Administrador | Alta | - Muestra catálogo de repuestos con precio<br>- Calcula presupuesto en tiempo real |
 | RF-008 | Asignar técnico al crear la orden | El sistema debe permitir asignar un técnico a la orden en el momento de su creación. | Despachador, Administrador | Alta | - El campo "técnico asignado" queda disponible en el formulario de creación |
@@ -55,19 +67,69 @@ El proyecto está en etapa temprana: se cuenta con wireframes validados (11 pant
 | RF-013 | Consultar orden asignada (vista móvil) | El sistema debe mostrar al técnico, en la vista móvil, el detalle de la orden que tiene asignada. | Técnico | Alta | - Incluye checklist, campo de foto y notas |
 | RF-014 | Agregar foto y notas desde móvil | El sistema debe permitir al técnico adjuntar fotos y escribir notas sobre la orden desde la vista móvil. | Técnico | Media | — |
 | RF-015 | Completar orden desde móvil | El sistema debe permitir al técnico marcar la orden como finalizada desde la vista móvil. | Técnico | Baja | ⚠️ Flujo exacto pendiente de definir — no bloquea el MVP |
+
+### 3.3 Vehículos
+
+| ID | Nombre | Descripción | Actor(es) | Prioridad | Criterios de aceptación |
+|----|--------|-------------|-----------|-----------|--------------------------|
 | RF-016 | Consultar listado de flota | El sistema debe mostrar el listado completo de vehículos de la flota. | Despachador, Administrador | Alta | - Incluye filtros por estado (atrasado, próximo a vencer, programado) |
 | RF-017 | Consultar perfil de vehículo | El sistema debe mostrar identificación (placa, VIN, marca/modelo, tipo, kilometraje) e historial de órdenes de un vehículo. | Despachador, Administrador | Alta | — |
-| RF-018 | Registrar / editar vehículo | El sistema debe permitir crear y editar el registro de un vehículo. | Despachador, Administrador | Alta | - Campos mínimos: placa, VIN, marca, modelo, tipo, kilometraje |
+| RF-018 | Registrar / editar vehículo | El sistema debe permitir crear y editar el registro de un vehículo, incluyendo la selección o creación inline de su cliente dueño (empresa o persona natural). | Despachador, Administrador | Alta | - Campos mínimos: placa, VIN, marca, modelo, tipo, kilometraje<br>- Permite seleccionar un cliente existente o crear uno nuevo (RF-030) sin salir del formulario |
 | RF-019 | Dar de baja un vehículo | El sistema debe permitir cambiar el estado de un vehículo a "dado de baja". | Administrador | Alta | - Un vehículo dado de baja no aparece disponible para nuevas órdenes |
+| RF-034 | Filtrar listado de vehículos (filtros avanzados) | El sistema debe permitir filtrar el listado de vehículos por cliente, tipo, estado y otros criterios. | Despachador, Administrador | Media | ⚠️ Lista completa de criterios de filtro pendiente de definir — mínimo: cliente, tipo, estado |
+
+### 3.4 Clientes
+
+| ID | Nombre | Descripción | Actor(es) | Prioridad | Criterios de aceptación |
+|----|--------|-------------|-----------|-----------|--------------------------|
 | RF-028 | Asociar vehículo a un cliente | El sistema debe permitir registrar el cliente dueño de un vehículo, ya sea una empresa (con posiblemente varios vehículos) o una persona natural (típicamente un vehículo). | Despachador, Administrador | Alta | - El registro distingue tipo de cliente: empresa o persona natural |
 | RF-029 | Registrar cotización de un cliente | El sistema debe permitir registrar la solicitud de cotización de un cliente (empresa o persona natural) al crear la orden de trabajo, reutilizando el presupuesto ya calculado (RF-010). | Despachador, Administrador | Alta | ⚠️ Se asume que la cotización es equivalente al presupuesto de la orden (RF-010); a confirmar si debe existir como una etapa previa independiente a la creación de la orden (ej. "cotización pendiente de aprobación" antes de convertirse en orden) |
+| RF-030 | Registrar / editar cliente | El sistema debe permitir crear y editar el registro de un cliente (empresa o persona natural), incluyendo clientes de paso (no recurrentes). | Despachador, Administrador | Alta | ✅ Todo cliente, recurrente o de paso, se registra con los mismos campos obligatorios — no existe un flujo simplificado alterno |
+
+### 3.5 Técnicos
+
+| ID | Nombre | Descripción | Actor(es) | Prioridad | Criterios de aceptación |
+|----|--------|-------------|-----------|-----------|--------------------------|
 | RF-020 | Consultar listado/perfil de técnicos | El sistema debe mostrar, en un modal, el listado de técnicos con su disponibilidad y especialidad. | Despachador, Administrador | Media | — |
 | RF-021 | Registrar / editar técnico | El sistema debe permitir crear y editar el registro de un técnico. | Administrador | Media | — |
+
+### 3.6 Repuestos
+
+| ID | Nombre | Descripción | Actor(es) | Prioridad | Criterios de aceptación |
+|----|--------|-------------|-----------|-----------|--------------------------|
 | RF-022 | Gestionar catálogo de repuestos | El sistema debe permitir dar de alta repuestos y gestionar su stock. | Administrador | Alta | - Incluye código, nombre, precio y cantidad en stock |
+
+### 3.7 Informes
+
+| ID | Nombre | Descripción | Actor(es) | Prioridad | Criterios de aceptación |
+|----|--------|-------------|-----------|-----------|--------------------------|
 | RF-023 | Generar informes | El sistema debe generar informes a partir de los datos almacenados (órdenes, técnicos, repuestos, vehículos). | Despachador, Administrador | Media | ⚠️ Alcance específico de reportes pendiente de definir |
+
+### 3.8 Autenticación y roles
+
+| ID | Nombre | Descripción | Actor(es) | Prioridad | Criterios de aceptación |
+|----|--------|-------------|-----------|-----------|--------------------------|
+| RF-001 | Inicio de sesión con roles | El sistema debe permitir iniciar sesión y restringir el acceso a módulos/acciones según el rol del usuario. | Administrador, Despachador, Técnico | Alta | - Login vía Keycloak/OIDC<br>- El técnico solo ve sus órdenes asignadas en la vista móvil |
+| RF-036 | Forzar actualización periódica de contraseña | El sistema debe exigir a los usuarios actualizar su contraseña cada 30 días. Si no la actualizan, el usuario queda inhabilitado hasta que la actualice. | Administrador, Despachador, Técnico | Alta | - Si han pasado 30 días desde la última actualización, el usuario queda inhabilitado<br>- Al intentar iniciar sesión con contraseña vencida, el sistema redirige directamente a la pantalla de actualización de contraseña, sin permitir acceso al resto del sistema |
+
+### 3.9 Administración
+
+| ID | Nombre | Descripción | Actor(es) | Prioridad | Criterios de aceptación |
+|----|--------|-------------|-----------|-----------|--------------------------|
 | RF-024 | Gestionar usuarios | El sistema debe permitir crear, editar, asignar rol y desactivar usuarios. | Administrador | Alta | — |
 | RF-025 | Gestionar catálogos base | El sistema debe permitir administrar los catálogos de tipos de servicio y categorías de repuestos. | Administrador | Media | — |
-| RF-026 | Notificar acciones relevantes | El sistema debe enviar una notificación ante acciones relevantes (orden creada/asignada, cambio de etapa, orden atrasada, stock bajo, vehículo dado de baja). | Todos | Media | ⚠️ Canal de entrega (in-app/email/push) pendiente de definir |
+| RF-035 | Configurar etapas del tablero kanban | El sistema debe permitir crear, editar, reordenar y desactivar las etapas del tablero kanban de órdenes de trabajo. | Administrador | Alta | - Las etapas no son fijas en código; viven como catálogo configurable<br>- Los valores actuales (Requiere atención, Programado, En taller, Completados) son la configuración inicial por defecto, no un límite |
+
+### 3.10 Notificaciones
+
+| ID | Nombre | Descripción | Actor(es) | Prioridad | Criterios de aceptación |
+|----|--------|-------------|-----------|-----------|--------------------------|
+| RF-026 | Notificar acciones relevantes | El sistema debe enviar una notificación ante acciones relevantes (orden creada/asignada, cambio de etapa, orden atrasada, stock bajo, vehículo dado de baja, contraseña próxima a vencer). | Todos | Alta | ✅ Canales confirmados: in-app, email y WhatsApp (requiere integración con proveedor de mensajería, ver A08) |
+
+### 3.11 Auditoría
+
+| ID | Nombre | Descripción | Actor(es) | Prioridad | Criterios de aceptación |
+|----|--------|-------------|-----------|-----------|--------------------------|
 | RF-027 | Registrar auditoría de cambios | El sistema debe registrar automáticamente quién, cuándo y qué cambió en una orden, un presupuesto o el estado de un vehículo. | Sistema | Alta | - Cada registro incluye entidad, campo, valor anterior, valor nuevo, usuario y timestamp |
 
 **Prioridad sugerida:** Alta (MVP) / Media (siguiente iteración) / Baja (nice to have)
@@ -87,6 +149,7 @@ El proyecto está en etapa temprana: se cuenta con wireframes validados (11 pant
 | RNF-007 | Mantenibilidad | El código (Kotlin, Quarkus, Compose Multiplatform) debe seguir estándares que faciliten el mantenimiento por un equipo pequeño. | [por definir — ej. cobertura de pruebas ≥ X%] |
 | RNF-008 | Compatibilidad | El sistema debe funcionar en Web (dashboard) y en Android/iOS (vista móvil de técnicos) a partir de un mismo código compartido. | Kotlin Multiplatform + Compose Multiplatform (targets Web Wasm/JS y Android/iOS) |
 | RNF-009 | Persistencia | Los datos deben almacenarse en un motor relacional que soporte las relaciones del modelo de datos definido. | PostgreSQL |
+| RNF-010 | Seguridad | Las contraseñas deben rotarse obligatoriamente cada 30 días; vencido ese plazo, la cuenta queda inhabilitada hasta la actualización. | Configuración de política de contraseñas en Keycloak (max password age = 30 días) |
 
 **Categorías comunes de referencia:** rendimiento, seguridad, disponibilidad, escalabilidad, usabilidad, mantenibilidad, portabilidad, compatibilidad, cumplimiento normativo (legal/regulatorio), respaldo y recuperación ante desastres.
 
@@ -107,17 +170,17 @@ El proyecto está en etapa temprana: se cuenta con wireframes validados (11 pant
 - La lista definitiva de roles (más allá de la propuesta Administrador/Despachador/Técnico) aún no está confirmada.
 - El canal de entrega de notificaciones y el alcance exacto de los informes se definirán en una siguiente iteración, sin bloquear el desarrollo del MVP.
 - El software debe contar con un porcentje mínimo de 80% de covertura de pruebas unitarias, y de integración, para garantizar la calidad operativa del sistema.
-- ❓ **Abierto:** el taller atiende tanto empresas (flota) como personas naturales (vehículo particular). Se asume, mientras no se confirme lo contrario, que el `Cliente` interactúa de forma presencial/telefónica (sin login propio) y que la "cotización" es equivalente al presupuesto ya modelado en la orden de trabajo (RF-010). Esto afecta el modelo de datos de `Client` y `Vehicle`, y debería confirmarse antes de avanzar al diagrama de clases.
+- ✅ **Confirmado:** el taller atiende tanto empresas (flota) como personas naturales (vehículo particular). El `Cliente` no tiene login ni acceso directo al sistema — interactúa de forma presencial en el establecimiento o por otro medio de comunicación (ej. teléfono), y es el despachador quien registra sus datos y la cotización (equivalente al presupuesto ya modelado en la orden de trabajo, RF-010).
+- ✅ **Confirmado:** un cliente de paso (no recurrente) se registra con los **mismos campos obligatorios** que cualquier otro cliente — no hay un flujo simplificado ni un tipo de registro distinto (ver RF-030).
+- ⚠️ **Asunción de diseño:** la asociación vehículo-cliente ocurre de forma inline dentro del formulario de registro de vehículo (RF-018), en vez de exigir que el cliente exista previamente en una pantalla separada. A confirmar si este es el flujo deseado.
 
 ---
 
 ## 6. Fuera de alcance
 
-- Reasignación de técnico **después** de creada la orden (por ahora la asignación solo ocurre al crear la orden).
 - Flujo detallado de "completar orden" desde la vista móvil (definido como pendiente para una siguiente iteración).
 - Pantalla dedicada de consulta de historial de auditoría (por ahora solo se confirma el registro, no la consulta).
 - Integración con facturación electrónica (DIAN) — ❓ estaba fuera de alcance para FloatOps, pero al absorber a TallerFlow (cuyo dominio sí consideraba facturación electrónica vía terceros como Alegra, Siigo o Factus) esto queda abierto: a confirmar si entra al MVP o a una siguiente iteración.
-- Definición de canal específico de notificaciones (in-app, email o push) — se define el requerimiento funcional, no el canal.
 
 ---
 
@@ -140,3 +203,7 @@ El proyecto está en etapa temprana: se cuenta con wireframes validados (11 pant
 |---------|-------|-------|---------|
 | 0.1 | 07/08/2026 | Edwin Suares | Versión inicial, construida a partir del análisis de los wireframes de FloatOps y las decisiones de alcance confirmadas hasta la fecha. |
 | 0.2 | 07/08/2026 | Edwin Suares | Sincronizado con `README.md`: se incorpora la fusión con TallerFlow, el modelo de cliente (empresa / persona natural), el actor Cliente (A06), RF-028 y RF-029, y se abre la pregunta de facturación electrónica DIAN en vez de descartarla. |
+| 0.3 | 07/08/2026 | Edwin Suares | Se agrega el actor A07 (Facturación) y el requisito de cobertura de pruebas. Se reorganiza la sección 3 (Requerimientos funcionales) en subsecciones por módulo (3.1 a 3.11), en el mismo orden usado en `README.md`, agregando el nuevo módulo "Clientes". Se corrige una fila de tabla mal formada en la sección de Actores. |
+| 0.4 | 07/08/2026 | Edwin Suares | Se confirma que el actor Cliente (empresa o persona natural) no requiere login: interactúa presencialmente en el establecimiento o por otro medio de comunicación, y el despachador registra sus datos. |
+| 0.5 | 07/08/2026 | Edwin Suares | Se agrega RF-030 (registrar/editar cliente). Se aclara que la asociación vehículo-cliente ocurre inline en el formulario de vehículo (RF-018). Se confirma que un cliente de paso (no recurrente) se registra con los mismos campos obligatorios que cualquier cliente, sin flujo simplificado. |
+| 0.6 | 07/08/2026 | Edwin Suares | Se agrega el actor A08 (proveedor de notificaciones). Se agregan RF-031 (actualizar etapa desde el detalle), RF-032 (reasignar técnico en cualquier etapa, restringido por rol), RF-033 (aprobación de cotización por el cliente), RF-034 (filtros avanzados de vehículos), RF-035 (configurar etapas del kanban) y RF-036 (rotación obligatoria de contraseña cada 30 días). Se confirman los canales de notificación (in-app, email, WhatsApp) en RF-026. Se eliminan de "Fuera de alcance" la reasignación de técnico y la definición de canal de notificaciones, por quedar resueltas. |
