@@ -1,0 +1,36 @@
+@startuml RF-005
+!pragma layout smetana
+skinparam actorStyle awesome
+left to right direction
+
+title Caso de uso: RF-005 - Mover orden entre etapas (drag and drop)
+
+skinparam usecase {
+  BackgroundColor<<Alta>> LightSkyBlue
+  BorderColor<<Alta>> SteelBlue
+  BackgroundColor<<Media>> Khaki
+  BorderColor<<Media>> DarkKhaki
+  BackgroundColor<<Baja>> Gainsboro
+  BorderColor<<Baja>> Gray
+  ArrowColor SteelBlue
+}
+
+actor Despachador
+actor Administrador
+
+package "Ordenes de trabajo" {
+  usecase UC1 as "Mover orden entre etapas\n(drag and drop)\n--\nCambia la etapa de una orden\narrastrandola entre columnas\ndel kanban." <<Alta>>
+}
+
+Despachador --> UC1
+Administrador --> UC1
+
+note right of UC1
+  **RF-005** - Prioridad: Alta
+  --
+  Criterios de aceptacion:
+  * El cambio de etapa se persiste al soltar la tarjeta
+  * Dispara notificacion (RF-026) y auditoria (RF-027)
+end note
+
+@enduml

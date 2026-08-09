@@ -1,0 +1,50 @@
+@startuml RF-003
+!pragma layout smetana
+skinparam actorStyle awesome
+left to right direction
+
+title Caso de uso: RF-003 - Navegar a detalle desde el panel
+
+' Convencion de color reutilizable en todos los diagramas de RF de FloatOps
+skinparam usecase {
+  BackgroundColor<<Alta>> LightSkyBlue
+  BorderColor<<Alta>> SteelBlue
+  BackgroundColor<<Media>> Khaki
+  BorderColor<<Media>> DarkKhaki
+  BackgroundColor<<Baja>> Gainsboro
+  BorderColor<<Baja>> Gray
+  ArrowColor SteelBlue
+}
+
+actor Administrador
+actor Despachador
+
+package "Panel" {
+  usecase UC1 as "Consultar panel de KPIs" <<Alta>>
+  usecase UC2 as "Navegar a detalle desde el panel" <<Alta>>
+}
+
+package "Vehiculos" {
+  usecase UC3 as "Consultar perfil de vehiculo" <<Alta>>
+}
+
+package "Ordenes de trabajo" {
+  usecase UC4 as "Consultar detalle de orden" <<Alta>>
+}
+
+Administrador --> UC2
+Despachador --> UC2
+
+UC2 .> UC1 : extends
+UC2 .> UC3 : abre perfil
+UC2 .> UC4 : abre detalle
+
+note right of UC2
+  **RF-003** - Prioridad: Alta
+  --
+  Criterios de aceptacion:
+  * Clic en fila de vehiculo abre su perfil
+  * Clic en fila de orden abre su detalle
+end note
+
+@enduml

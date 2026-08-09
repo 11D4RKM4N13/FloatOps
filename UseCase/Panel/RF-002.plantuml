@@ -1,0 +1,37 @@
+@startuml RF-002
+!pragma layout smetana
+skinparam actorStyle awesome
+left to right direction
+
+title Caso de uso: RF-002 - Consultar panel de KPIs
+
+' Convencion de color reutilizable en todos los diagramas de RF de FloatOps
+skinparam usecase {
+  BackgroundColor<<Alta>> LightSkyBlue
+  BorderColor<<Alta>> SteelBlue
+  BackgroundColor<<Media>> Khaki
+  BorderColor<<Media>> DarkKhaki
+  BackgroundColor<<Baja>> Gainsboro
+  BorderColor<<Baja>> Gray
+  ArrowColor SteelBlue
+}
+
+actor Administrador
+actor Despachador
+
+package "Panel" {
+  usecase UC1 as "Consultar panel de KPIs\n--\nMuestra vehiculos pendientes,\nordenes abiertas y total de flota." <<Alta>>
+}
+
+Administrador --> UC1 : consulta
+Despachador --> UC1 : consulta
+
+note right of UC1
+  **RF-002** - Prioridad: Alta
+  --
+  Criterios de aceptacion:
+  * Muestra conteos actualizados
+  * Incluye tabla de vehiculos que requieren servicio
+end note
+
+@enduml

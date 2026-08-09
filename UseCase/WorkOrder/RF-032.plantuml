@@ -1,0 +1,36 @@
+@startuml RF-032
+!pragma layout smetana
+skinparam actorStyle awesome
+left to right direction
+
+title Caso de uso: RF-032 - Reasignar tecnico en cualquier etapa
+
+skinparam usecase {
+  BackgroundColor<<Alta>> LightSkyBlue
+  BorderColor<<Alta>> SteelBlue
+  BackgroundColor<<Media>> Khaki
+  BorderColor<<Media>> DarkKhaki
+  BackgroundColor<<Baja>> Gainsboro
+  BorderColor<<Baja>> Gray
+  ArrowColor SteelBlue
+}
+
+actor Despachador
+actor Administrador
+
+package "Ordenes de trabajo" {
+  usecase UC1 as "Reasignar tecnico\nen cualquier etapa\n--\nReasigna el tecnico de una\norden en cualquier etapa de\nsu ciclo de vida." <<Alta>>
+}
+
+Despachador --> UC1
+Administrador --> UC1
+
+note right of UC1
+  **RF-032** - Prioridad: Alta
+  --
+  Criterios de aceptacion:
+  * Restringido por rol: solo Despachador o Administrador
+  * Dispara notificacion (RF-026) y auditoria (RF-027)
+end note
+
+@enduml

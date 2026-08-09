@@ -1,0 +1,33 @@
+@startuml RF-013
+!pragma layout smetana
+skinparam actorStyle awesome
+left to right direction
+
+title Caso de uso: RF-013 - Consultar orden asignada (vista movil)
+
+skinparam usecase {
+  BackgroundColor<<Alta>> LightSkyBlue
+  BorderColor<<Alta>> SteelBlue
+  BackgroundColor<<Media>> Khaki
+  BorderColor<<Media>> DarkKhaki
+  BackgroundColor<<Baja>> Gainsboro
+  BorderColor<<Baja>> Gray
+  ArrowColor SteelBlue
+}
+
+actor Tecnico
+
+package "Ordenes de trabajo" {
+  usecase UC1 as "Consultar orden asignada\n(vista movil)\n--\nMuestra al tecnico el detalle\nde la orden que tiene asignada\nen la vista movil." <<Alta>>
+}
+
+Tecnico --> UC1
+
+note right of UC1
+  **RF-013** - Prioridad: Alta
+  --
+  Criterios de aceptacion:
+  * Incluye checklist, campo de foto y notas
+end note
+
+@enduml

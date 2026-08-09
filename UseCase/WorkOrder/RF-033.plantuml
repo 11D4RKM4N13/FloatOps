@@ -1,0 +1,36 @@
+@startuml RF-033
+!pragma layout smetana
+skinparam actorStyle awesome
+left to right direction
+
+title Caso de uso: RF-033 - Registrar aprobacion de cotizacion
+
+skinparam usecase {
+  BackgroundColor<<Alta>> LightSkyBlue
+  BorderColor<<Alta>> SteelBlue
+  BackgroundColor<<Media>> Khaki
+  BorderColor<<Media>> DarkKhaki
+  BackgroundColor<<Baja>> Gainsboro
+  BorderColor<<Baja>> Gray
+  ArrowColor SteelBlue
+}
+
+actor Despachador
+actor Administrador
+
+package "Ordenes de trabajo" {
+  usecase UC1 as "Registrar aprobacion\nde cotizacion\n--\nRegistra si el cliente aprobo\nla cotizacion (presupuesto)\nde la orden." <<Alta>>
+}
+
+Despachador --> UC1
+Administrador --> UC1
+
+note right of UC1
+  **RF-033** - Prioridad: Alta
+  --
+  Criterios de aceptacion:
+  * Aprobacion registrada manualmente por el despachador
+  * Pendiente confirmar si bloquea el paso a En taller
+end note
+
+@enduml

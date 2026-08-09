@@ -1,0 +1,36 @@
+@startuml RF-007
+!pragma layout smetana
+skinparam actorStyle awesome
+left to right direction
+
+title Caso de uso: RF-007 - Crear orden de trabajo (formulario completo)
+
+skinparam usecase {
+  BackgroundColor<<Alta>> LightSkyBlue
+  BorderColor<<Alta>> SteelBlue
+  BackgroundColor<<Media>> Khaki
+  BorderColor<<Media>> DarkKhaki
+  BackgroundColor<<Baja>> Gainsboro
+  BorderColor<<Baja>> Gray
+  ArrowColor SteelBlue
+}
+
+actor Despachador
+actor Administrador
+
+package "Ordenes de trabajo" {
+  usecase UC1 as "Crear orden de trabajo\n(formulario completo)\n--\nFormulario completo con\nseleccion de repuestos desde\nel catalogo." <<Alta>>
+}
+
+Despachador --> UC1
+Administrador --> UC1
+
+note right of UC1
+  **RF-007** - Prioridad: Alta
+  --
+  Criterios de aceptacion:
+  * Muestra catalogo de repuestos con precio
+  * Calcula presupuesto en tiempo real
+end note
+
+@enduml

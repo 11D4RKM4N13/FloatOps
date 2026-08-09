@@ -1,0 +1,33 @@
+@startuml RF-014
+!pragma layout smetana
+skinparam actorStyle awesome
+left to right direction
+
+title Caso de uso: RF-014 - Agregar foto y notas desde movil
+
+skinparam usecase {
+  BackgroundColor<<Alta>> LightSkyBlue
+  BorderColor<<Alta>> SteelBlue
+  BackgroundColor<<Media>> Khaki
+  BorderColor<<Media>> DarkKhaki
+  BackgroundColor<<Baja>> Gainsboro
+  BorderColor<<Baja>> Gray
+  ArrowColor SteelBlue
+}
+
+actor Tecnico
+
+package "Ordenes de trabajo" {
+  usecase UC1 as "Agregar foto y notas\ndesde movil\n--\nAdjunta fotos y escribe notas\nsobre la orden desde la\nvista movil." <<Media>>
+}
+
+Tecnico --> UC1
+
+note right of UC1
+  **RF-014** - Prioridad: Media
+  --
+  Criterios de aceptacion:
+  * Sin criterios adicionales definidos
+end note
+
+@enduml

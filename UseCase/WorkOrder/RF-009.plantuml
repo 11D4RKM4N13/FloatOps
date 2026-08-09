@@ -1,0 +1,35 @@
+@startuml RF-009
+!pragma layout smetana
+skinparam actorStyle awesome
+left to right direction
+
+title Caso de uso: RF-009 - Adjuntar fotos a la orden
+
+skinparam usecase {
+  BackgroundColor<<Alta>> LightSkyBlue
+  BorderColor<<Alta>> SteelBlue
+  BackgroundColor<<Media>> Khaki
+  BorderColor<<Media>> DarkKhaki
+  BackgroundColor<<Baja>> Gainsboro
+  BorderColor<<Baja>> Gray
+  ArrowColor SteelBlue
+}
+
+actor Despachador
+actor Tecnico
+
+package "Ordenes de trabajo" {
+  usecase UC1 as "Adjuntar fotos\na la orden\n--\nAdjunta una o mas fotos del\nproblema al crear o editar\nuna orden." <<Media>>
+}
+
+Despachador --> UC1
+Tecnico --> UC1
+
+note right of UC1
+  **RF-009** - Prioridad: Media
+  --
+  Criterios de aceptacion:
+  * Soporta al menos 3 fotos por orden
+end note
+
+@enduml
