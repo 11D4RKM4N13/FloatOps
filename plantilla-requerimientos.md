@@ -27,6 +27,7 @@ El proyecto está en etapa temprana: se cuenta con wireframes validados (11 pant
 | A04 | Job programado | Automático | Proceso interno que evalúa condiciones (orden atrasada, stock bajo) y dispara notificaciones. |
 | A05 | Proveedor de identidad (Keycloak) | Externo | Servicio de autenticación y autorización (OIDC) que valida credenciales y roles. |
 | A06 | Cliente | Humano / Organización | Empresa (con flota) o persona natural que solicita cotización y trae su vehículo al taller para reparación o mantenimiento. No hay evidencia de que tenga acceso directo al sistema — se asume que la interacción es presencial/telefónica y el despachador registra sus datos, no un login propio. ❓ A confirmar si en una fase futura se requiere un portal de autoservicio para el cliente. |
+| A07 | Facturación | Externo | API de facturación electrónica (DIAN).
 
 **Notas:**
 - Administrador y Despachador son actores primarios del panel; Técnico es actor primario de la vista móvil.
@@ -105,6 +106,7 @@ El proyecto está en etapa temprana: se cuenta con wireframes validados (11 pant
 - El volumen de datos inicial (flota, órdenes, técnicos, repuestos) es bajo, propio de una etapa temprana del producto.
 - La lista definitiva de roles (más allá de la propuesta Administrador/Despachador/Técnico) aún no está confirmada.
 - El canal de entrega de notificaciones y el alcance exacto de los informes se definirán en una siguiente iteración, sin bloquear el desarrollo del MVP.
+- El software debe contar con un porcentje mínimo de 80% de covertura de pruebas unitarias, y de integración, para garantizar la calidad operativa del sistema.
 - ❓ **Abierto:** el taller atiende tanto empresas (flota) como personas naturales (vehículo particular). Se asume, mientras no se confirme lo contrario, que el `Cliente` interactúa de forma presencial/telefónica (sin login propio) y que la "cotización" es equivalente al presupuesto ya modelado en la orden de trabajo (RF-010). Esto afecta el modelo de datos de `Client` y `Vehicle`, y debería confirmarse antes de avanzar al diagrama de clases.
 
 ---
