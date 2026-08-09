@@ -1,1 +1,211 @@
 # FloatOps
+
+Sistema de gestión de flota y órdenes de servicio (fleet service management).
+
+> Este documento consolida las decisiones de análisis y diseño tomadas hasta ahora a partir de los wireframes (`Fleet Service Dashboard Wireframes.pptx`). Se actualizará a medida que avance el proyecto.
+
+## Estado del documento
+
+- ✅ = confirmado en los mockups o definido explícitamente por el equipo
+- ⚠️ = inferido con evidencia parcial, sujeto a validación
+- ❓ = pendiente de definir
+
+---
+
+## 1. Stack tecnológico
+
+**Backend**
+- **Java / Kotlin + Quarkus** — framework principal de la API
+- **Hibernate ORM with Panache** + **PostgreSQL** — persistencia
+- **Quarkus OIDC + Keycloak** — autenticación y autorización (roles pendientes de definir, ver sección 6)
+- **Mutiny** — programación reactiva para actualizaciones en tiempo real (kanban, notificaciones futuras)
+
+**Frontend**
+- **Kotlin Multiplatform (KMP) + Compose Multiplatform**
+  - Módulo `shared`: modelos de dominio, lógica de negocio, cliente HTTP (Ktor client)
+  - Target **Web (Wasm/JS)**: dashboard de administración
+  - Target **Android/iOS**: vista móvil para técnicos
+  - Estado compartido vía `StateFlow` / `ViewModel` en `commonMain`
+
+**Infraestructura**
+- Docker Compose (Quarkus + PostgreSQL + Keycloak) en desarrollo local
+- Preparado para Kubernetes si se requiere escalar
+
+**Herramienta de modelado UML**
+- **Lucid** (conector MCP) — pendiente de conexión por parte del usuario para generar y mantener el diagrama de clases y el diagrama de casos de uso de forma colaborativa.
+
+---
+
+## 2. Módulos del sistema
+
+Alineados con el menú lateral confirmado en los mockups (`PANEL`, `ÓRDENES DE TRABAJO`, `VEHÍCULOS`, `TÉCNICOS`, `REPUESTOS`, `INFORMES`):
+
+| Módulo | Estado de mockup | Notas |
+|---|---|---|
+| Panel (Dashboard) | ✅ Completo | KPIs + tabla de vehículos que requieren servicio |
+| Órdenes de trabajo | ✅ Completo | Núcleo del sistema: kanban, detalle, formularios, checklist |
+| Vehículos | ✅ Completo | Listado, perfil, historial |
+| Técnicos | ⚠️ Parcial | Solo vista móvil del técnico; gestión admin confirmada por el equipo, sin mockup aún |
+| Repuestos | ⚠️ Parcial | Catálogo visible embebido en el formulario de orden; gestión de inventario confirmada por el equipo, sin mockup aún |
+| Informes | ❓ Sin mockup | Confirmado que debe existir, basado en datos almacenados del sistema — alcance por definir |
+
+**Módulos transversales (sin mockup, pero ya confirmados como requeridos por el equipo):**
+
+| Módulo | Estado | Notas |
+|---|---|---|
+| Autenticación y roles | ✅ Requerido | Login con roles diferenciados. Roles concretos aún por confirmar (ver sección 6) |
+| Notificaciones | ✅ Requerido | Notificaciones en cada acción relevante del sistema |
+| Auditoría | ✅ Requerido (obligatorio) | Trazabilidad de cambios en órdenes, presupuestos y estado de vehículos |
+| Administración | ✅ Requerido | Gestión de usuarios y catálogos base (tipos de servicio, categorías de repuestos) |
+
+---
+
+## 3. Modelo de datos preliminar
+
+| Entidad | Campos clave | Relaciones | Notas |
+|---|---|---|---|
+| `Vehicle` | placa, VIN, marca, modelo, tipo, kilometraje, **estado (activo / dado de baja)** | 1—N `WorkOrder`, N—1 `Client` | Registro/edición y baja de vehículo confirmados como requeridos; campos inferidos a partir del perfil de vehículo visto en el mockup (placa, VIN, marca/modelo, tipo, kilometraje). **Actualización:** FloatOps es un taller de reparación que atiende tanto empresas con flota como personas naturales — ver `Client` |
+| `Client` | nombre, **tipo (empresa / persona natural)**, datos de contacto | 1—N `Vehicle` | ⚠️ Se asume interacción presencial/telefónica (sin login propio); a confirmar si en una fase futura se requiere portal de autoservicio |
+| `WorkOrder` | etapa (kanban), prioridad, descripción del problema, tipo de servicio, fecha programada, presupuesto | N—1 `Vehicle`, N—1 `Technician`, 1—N `ChecklistItem`, 1—N `Photo`, 1—N `WorkOrderPart` | Técnico se asigna **al crear la orden** (no reasignación posterior confirmada aún) |
+| `Technician` | nombre, especialidad, disponibilidad | 1—N `WorkOrder` | CRUD completo confirmado; el listado/perfil se visualiza **en un modal** desde el panel |
+| `ChecklistItem` | descripción, completado, orden | N—1 `WorkOrder` | Estado exacto de "completado" aún no visto explícitamente en el mockup (⚠️ inferido del checkbox) |
+| `Part` | código, nombre, stock, precio | N—N `WorkOrder` (vía `WorkOrderPart`) | Gestión de stock / alta de repuesto confirmada como requerida |
+| `Photo` | url, timestamp | N—1 `WorkOrder` | — |
+| `User` | nombre, credenciales, rol | N—1 `Role` | Autenticación vía Keycloak/OIDC |
+| `Role` | nombre (ej. administrador, despachador, técnico) | 1—N `User` | ⚠️ Roles concretos son una propuesta inicial, pendiente de confirmar lista definitiva |
+| `Notification` | tipo de evento, mensaje, leída/no leída, timestamp | N—1 `User` (destinatario) | Se dispara por acciones del sistema (ver 4.9) |
+| `AuditLog` | entidad afectada, campo modificado, valor anterior, valor nuevo, usuario, timestamp | N—1 `User`, referencia polimórfica a la entidad auditada | Obligatorio para `WorkOrder`, presupuesto y estado de `Vehicle` como mínimo |
+| `ServiceType` | nombre | 1—N `WorkOrder` | Catálogo base gestionado desde Administración |
+| `PartCategory` | nombre | 1—N `Part` | Catálogo base gestionado desde Administración |
+
+**Estados identificados:**
+- **Etapa de la orden (kanban):** `Requiere atención` → `Programado` → `En taller` → `Completados` (secuencia hacia adelante confirmada; retrocesos no confirmados)
+- **Asignación de técnico:** `sin asignar` / `asignado a [técnico]` — ahora se resuelve **al momento de creación de la orden**
+- **Estado de vehículo:** `activo` / `dado de baja` (nuevo, agregado por soporte de baja confirmado)
+- **Estado de mantenimiento del vehículo** (`Atrasado` / `Próximo a vencer` / `Programado`): distinto de la etapa de la orden; parece calculado según fecha de vencimiento (⚠️ pendiente de confirmar regla de cálculo)
+
+---
+
+## 4. Casos de uso por módulo
+
+### 4.1 Panel (Dashboard)
+- Consultar KPIs de flota (vehículos pendientes, órdenes abiertas, total de flota)
+- Consultar tabla "Vehículos que requieren servicio"
+- Consultar tabla densa de todos los vehículos con filtros por estado
+- **Navegar al detalle de un vehículo o de una orden desde el panel** ✅ confirmado
+
+### 4.2 Órdenes de trabajo
+- Consultar tablero kanban por etapa
+- **Mover una orden entre etapas del kanban mediante drag & drop** ✅ confirmado — implica que el frontend (Compose Multiplatform) debe soportar gestos de arrastre y el backend un endpoint de actualización de etapa
+- Consultar cola de órdenes abiertas
+- Crear orden de trabajo (modal rápido)
+- Crear orden de trabajo (página completa con catálogo de repuestos)
+- Validar campos obligatorios al crear una orden
+- Adjuntar fotos del problema
+- Seleccionar repuestos del catálogo y ver presupuesto calculado (estimado / repuestos / restante)
+- **Asignar técnico a una orden al momento de crearla** ✅ confirmado (no se define reasignación posterior — queda abierto para una siguiente iteración)
+- Consultar detalle de orden (descripción, checklist, repuestos usados, fechas, historial)
+- Marcar ítems del checklist de una orden
+- Consultar orden asignada (vista móvil, técnico)
+- Agregar foto desde la vista móvil
+- Agregar notas a la orden desde móvil
+- Cambiar estado / completar orden desde móvil — ❓ **se define más adelante** (queda pendiente, no bloquea el MVP)
+
+### 4.3 Vehículos
+- Consultar lista de flota
+- Consultar perfil de vehículo (identificación, placa, VIN, tipo, kilometraje)
+- Consultar historial de órdenes de un vehículo
+- Consultar contador de órdenes abiertas por vehículo
+- **Registrar / editar un vehículo** ✅ confirmado — campos inferidos del perfil visto en el mockup: placa, VIN, marca, modelo, tipo, kilometraje
+- **Dar de baja un vehículo** ✅ confirmado — requiere campo de estado en `Vehicle`
+
+### 4.4 Técnicos
+- Consultar orden asignada y trabajar el checklist (vista móvil)
+- **Ver lista / perfil de técnicos, disponibilidad y especialidad en un modal desde el panel** ✅ confirmado
+- **Registrar / editar un técnico** ✅ confirmado (CRUD completo)
+
+### 4.5 Repuestos
+- Consultar catálogo de repuestos dentro del formulario de orden
+- Seleccionar uno o varios repuestos para una orden
+- **Gestionar stock / dar de alta un repuesto** ✅ confirmado — requiere pantalla de administración de inventario (sin mockup aún)
+
+### 4.6 Informes
+- **Deben existir, basados en la información almacenada en el sistema** ✅ confirmado — alcance específico (qué reportes, qué filtros, qué exportaciones) pendiente de definir. Candidatos naturales según el modelo de datos ya definido:
+  - Órdenes por técnico / por período
+  - Tiempo promedio de resolución por tipo de servicio
+  - Gasto en repuestos por vehículo o por período
+  - Vehículos con mayor frecuencia de incidencias
+  - Cumplimiento de mantenimiento programado (a tiempo / atrasado)
+
+### 4.7 Autenticación y roles
+- Iniciar sesión con credenciales
+- Restringir acceso a módulos/acciones según rol del usuario (ej. un técnico solo ve sus órdenes asignadas en móvil)
+- Cerrar sesión
+
+### 4.8 Administración
+- Gestionar usuarios (crear, editar, asignar rol, desactivar)
+- Gestionar catálogo de tipos de servicio
+- Gestionar catálogo de categorías de repuestos
+
+### 4.9 Notificaciones
+Se confirmó que deben dispararse **en cada acción relevante**. Candidatos derivados de los casos de uso ya definidos:
+- Orden creada / orden asignada a un técnico
+- Orden movida de etapa en el kanban (ej. entra a "Requiere atención")
+- Orden marcada como atrasada
+- Checklist actualizado / orden completada
+- Stock bajo de un repuesto
+- Vehículo dado de baja
+
+> Pendiente definir: canal de entrega (in-app, email, push), y si todas las notificaciones anteriores aplican para todos los roles o solo para algunos.
+
+### 4.10 Auditoría
+- Registrar automáticamente cada cambio en una orden de trabajo (etapa, técnico asignado, checklist, repuestos)
+- Registrar automáticamente cada cambio en el presupuesto de una orden
+- Registrar automáticamente cada cambio de estado de un vehículo (activo / dado de baja)
+- Consultar historial de auditoría de una entidad (¿quién, qué, cuándo?)
+
+> Pendiente definir: si existe una pantalla dedicada de consulta de auditoría, y si aplica a alguna otra entidad además de las tres mencionadas.
+
+---
+
+## 5. Diagrama de estados — Orden de trabajo
+
+```mermaid
+stateDiagram-v2
+    [*] --> RequiereAtencion: crear orden
+    RequiereAtencion --> Programado
+    Programado --> EnTaller
+    EnTaller --> Completados
+    Completados --> [*]
+
+    note right of RequiereAtencion
+        Transición vía drag & drop
+        en el tablero kanban
+    end note
+```
+
+> Solo se confirma la secuencia hacia adelante (columnas reales del kanban: `Requiere atención`, `Programado`, `En taller`, `Completados`). No hay evidencia de si se permite retroceder o saltar etapas — a validar.
+
+---
+
+## 6. Decisiones sobre módulos transversales
+
+Confirmadas por el equipo:
+
+1. **Autenticación y roles:** ✅ el sistema requiere login con roles diferenciados. Roles propuestos como punto de partida (`administrador`, `despachador`, `técnico`) — ⚠️ **lista definitiva de roles y permisos por rol aún pendiente de confirmar**.
+2. **Notificaciones:** ✅ requeridas en cada acción relevante del sistema (ver lista de candidatos en 4.9) — ⚠️ **canal de entrega (in-app / email / push) pendiente de definir**.
+3. **Auditoría:** ✅ obligatoria para órdenes, presupuestos y estado de vehículos — ⚠️ **pendiente confirmar si se necesita una pantalla de consulta o solo registro interno**.
+4. **Administración:** ✅ debe existir pantalla de gestión de usuarios y catálogos base (tipos de servicio, categorías de repuestos).
+
+---
+
+## 7. Próximos pasos
+
+- [ ] Conectar Lucid para construir el diagrama de clases (UML) y el diagrama de casos de uso completo de forma colaborativa
+- [ ] Confirmar lista definitiva de roles y matriz de permisos por rol
+- [ ] Definir canal de entrega de notificaciones (in-app / email / push)
+- [ ] Confirmar si auditoría requiere pantalla de consulta dedicada
+- [ ] Definir el mecanismo de reasignación de técnico post-creación de orden (si aplica)
+- [ ] Definir el flujo de "completar orden" desde la vista móvil
+- [ ] Definir alcance detallado del módulo de Informes (qué reportes, filtros, exportación)
+- [ ] Diseñar mockups faltantes: gestión de vehículos (alta/edición/baja), gestión de técnicos, gestión de repuestos/inventario, informes, login, administración (usuarios/catálogos), notificaciones, auditoría
