@@ -93,57 +93,56 @@ Alineados con el menú lateral confirmado en los mockups (`PANEL`, `ÓRDENES DE 
 ## 4. Casos de uso por módulo
 
 ### 4.1 Panel (Dashboard)
-- Consultar KPIs de flota (vehículos pendientes, órdenes abiertas, total de flota)
-- Consultar tabla "Vehículos que requieren servicio"
-- Consultar tabla densa de todos los vehículos con filtros por estado
-- **Navegar al detalle de un vehículo o de una orden desde el panel** ✅ confirmado
+- Consultar KPIs de flota (vehículos pendientes, órdenes abiertas, total de flota) e incluye la tabla "vehículos que requieren servicio" (RF-002)
+- **Navegar al detalle de un vehículo o de una orden desde el panel** ✅ confirmado (RF-003)
+
+> Nota de auditoría: antes esta sección listaba también "tabla densa de todos los vehículos con filtros por estado" como caso de uso de Panel. Se reclasificó a **Vehículos** (RF-016 / RF-034) porque el mockup (slide 5) la titula "FlotaOps · Todos los vehículos", no "Panel" — es la pantalla de listado de flota, no del dashboard.
 
 ### 4.2 Órdenes de trabajo
-- Consultar tablero kanban por etapa
-- **Mover una orden entre etapas del kanban mediante drag & drop** ✅ confirmado — implica que el frontend (Compose Multiplatform) debe soportar gestos de arrastre y el backend un endpoint de actualización de etapa
-- **Actualizar la etapa de una orden mediante un botón en el detalle** ✅ confirmado — alternativa al drag & drop
-- Consultar cola de órdenes abiertas
-- Crear orden de trabajo (modal rápido)
-- Crear orden de trabajo (página completa con catálogo de repuestos)
-- Validar campos obligatorios al crear una orden
-- Adjuntar fotos del problema
-- Seleccionar repuestos del catálogo y ver presupuesto calculado (estimado / repuestos / restante)
-- **Asignar técnico a una orden al momento de crearla** ✅ confirmado
-- **Reasignar técnico en cualquier etapa posterior** ✅ confirmado — restringido a roles Despachador/Administrador
-- **Registrar la aprobación del cliente sobre la cotización** ✅ confirmado — registrada manualmente por el despachador (⚠️ pendiente confirmar si bloquea el avance de etapa)
-- Consultar detalle de orden (descripción, checklist, repuestos usados, fechas, historial)
-- Marcar ítems del checklist de una orden
-- Consultar orden asignada (vista móvil, técnico)
-- Agregar foto desde la vista móvil
-- Agregar notas a la orden desde móvil
-- Cambiar estado / completar orden desde móvil — ❓ **se define más adelante** (queda pendiente, no bloquea el MVP)
+- Consultar tablero kanban por etapa (RF-004)
+- **Mover una orden entre etapas del kanban mediante drag & drop** ✅ confirmado (RF-005) — implica que el frontend (Compose Multiplatform) debe soportar gestos de arrastre y el backend un endpoint de actualización de etapa
+- **Actualizar la etapa de una orden mediante un botón en el detalle** ✅ confirmado (RF-031) — alternativa al drag & drop
+- Consultar cola de órdenes abiertas (RF-037) — ⚠️ caso de uso confirmado en el mockup (slide 4) pero que no tenía RF asignado hasta esta revisión
+- Crear orden de trabajo (modal rápido) (RF-006)
+- Crear orden de trabajo (página completa con catálogo de repuestos) (RF-007)
+- Adjuntar fotos del problema (RF-009)
+- Seleccionar repuestos del catálogo y ver presupuesto calculado (estimado / repuestos / restante) (RF-010)
+- **Asignar técnico a una orden al momento de crearla** ✅ confirmado (RF-008)
+- **Reasignar técnico en cualquier etapa posterior** ✅ confirmado (RF-032) — restringido a roles Despachador/Administrador
+- **Registrar la aprobación del cliente sobre la cotización** ✅ confirmado (RF-033) — registrada manualmente por el despachador (⚠️ pendiente confirmar si bloquea el avance de etapa)
+- Consultar detalle de orden (descripción, checklist, repuestos usados, fechas, historial) (RF-011)
+- Marcar ítems del checklist de una orden (RF-012)
+- Consultar orden asignada (vista móvil, técnico) (RF-013)
+- Agregar foto y notas a la orden desde la vista móvil (RF-014)
+- Cambiar estado / completar orden desde móvil — ❓ **se define más adelante** (RF-015, queda pendiente, no bloquea el MVP)
+
+> Nota de auditoría: se quitó "Validar campos obligatorios al crear una orden" como línea aparte — es un criterio de aceptación de RF-006/RF-007, no un caso de uso independiente. "Agregar foto desde móvil" y "Agregar notas desde móvil" se fusionaron en una sola línea porque ambas corresponden al mismo RF-014.
 
 ### 4.3 Vehículos
-- Consultar lista de flota
-- Consultar perfil de vehículo (identificación, placa, VIN, tipo, kilometraje)
-- Consultar historial de órdenes de un vehículo
-- Consultar contador de órdenes abiertas por vehículo
-- **Registrar / editar un vehículo** ✅ confirmado — campos inferidos del perfil visto en el mockup: placa, VIN, marca, modelo, tipo, kilometraje. Incluye seleccionar o crear inline el cliente dueño del vehículo (⚠️ asunción de diseño, a confirmar)
-- **Dar de baja un vehículo** ✅ confirmado — requiere campo de estado en `Vehicle`
-- **Filtrar listado de vehículos con filtros avanzados (cliente, tipo, estado, etc.)** ✅ confirmado — lista completa de criterios pendiente de definir
+- Consultar lista de flota (RF-016)
+- Consultar perfil de vehículo (identificación, placa, VIN, tipo, kilometraje), incluyendo historial de órdenes y contador de órdenes abiertas del vehículo (RF-017)
+- **Registrar / editar un vehículo** ✅ confirmado (RF-018) — campos inferidos del perfil visto en el mockup: placa, VIN, marca, modelo, tipo, kilometraje. Incluye seleccionar o crear inline el cliente dueño del vehículo (⚠️ asunción de diseño, a confirmar)
+- **Dar de baja un vehículo** ✅ confirmado (RF-019) — requiere campo de estado en `Vehicle`
+- **Filtrar listado de vehículos con filtros avanzados (cliente, tipo, estado, etc.)** ✅ confirmado (RF-034) — lista completa de criterios pendiente de definir
 
 ### 4.4 Clientes
-- **Registrar / editar cliente (empresa o persona natural)** ✅ confirmado — sin distinción de flujo para clientes de paso (no recurrentes): mismos campos obligatorios para todos
-- **Asociar vehículo a un cliente** ✅ confirmado — ocurre dentro del formulario de registro de vehículo (RF-018)
-- Registrar cotización de un cliente al crear la orden (reutiliza el presupuesto ya calculado)
+- **Registrar / editar cliente (empresa o persona natural)** ✅ confirmado (RF-030) — sin distinción de flujo para clientes de paso (no recurrentes): mismos campos obligatorios para todos
+- **Asociar vehículo a un cliente** ✅ confirmado (RF-028) — ocurre dentro del formulario de registro de vehículo (RF-018)
+- Registrar cotización de un cliente al crear la orden (RF-029) — reutiliza el presupuesto ya calculado
 
 ### 4.5 Técnicos
-- Consultar orden asignada y trabajar el checklist (vista móvil)
-- **Ver lista / perfil de técnicos, disponibilidad y especialidad en un modal desde el panel** ✅ confirmado
-- **Registrar / editar un técnico** ✅ confirmado (CRUD completo)
+- **Ver lista / perfil de técnicos, disponibilidad y especialidad en un modal desde el panel** ✅ confirmado (RF-020)
+- **Registrar / editar un técnico** ✅ confirmado (RF-021, CRUD completo)
+
+> Nota de auditoría: se quitó "Consultar orden asignada y trabajar el checklist (vista móvil)" de esta sección — es RF-012/RF-013, ya documentado en Órdenes de trabajo. Estaba duplicado aquí.
 
 ### 4.6 Repuestos
-- Consultar catálogo de repuestos dentro del formulario de orden
-- Seleccionar uno o varios repuestos para una orden
-- **Gestionar stock / dar de alta un repuesto** ✅ confirmado — requiere pantalla de administración de inventario (sin mockup aún)
+- **Gestionar stock / dar de alta un repuesto** ✅ confirmado (RF-022) — requiere pantalla de administración de inventario (sin mockup aún)
+
+> Nota de auditoría: se quitaron "Consultar catálogo de repuestos dentro del formulario de orden" y "Seleccionar repuestos para una orden" de esta sección — son RF-007/RF-010, ya documentados en Órdenes de trabajo. Estaban duplicados aquí.
 
 ### 4.7 Informes
-- **Deben existir, basados en la información almacenada en el sistema** ✅ confirmado — alcance específico (qué reportes, qué filtros, qué exportaciones) pendiente de definir. Candidatos naturales según el modelo de datos ya definido:
+- **Deben existir, basados en la información almacenada en el sistema** ✅ confirmado (RF-023) — alcance específico (qué reportes, qué filtros, qué exportaciones) pendiente de definir. Candidatos naturales según el modelo de datos ya definido:
   - Órdenes por técnico / por período
   - Tiempo promedio de resolución por tipo de servicio
   - Gasto en repuestos por vehículo o por período
@@ -151,18 +150,16 @@ Alineados con el menú lateral confirmado en los mockups (`PANEL`, `ÓRDENES DE 
   - Cumplimiento de mantenimiento programado (a tiempo / atrasado)
 
 ### 4.8 Autenticación y roles
-- Iniciar sesión con credenciales
-- Restringir acceso a módulos/acciones según rol del usuario (ej. un técnico solo ve sus órdenes asignadas en móvil)
-- **Forzar actualización de contraseña cada 30 días** ✅ confirmado — si no se actualiza, el usuario queda inhabilitado; al intentar iniciar sesión con contraseña vencida, se redirige directamente a la pantalla de actualización, sin acceso al resto del sistema
-- Cerrar sesión
+- Iniciar sesión con credenciales, restringiendo el acceso a módulos/acciones según el rol del usuario (RF-001) — ej. un técnico solo ve sus órdenes asignadas en móvil
+- **Forzar actualización de contraseña cada 30 días** ✅ confirmado (RF-036) — si no se actualiza, el usuario queda inhabilitado; al intentar iniciar sesión con contraseña vencida, se redirige directamente a la pantalla de actualización, sin acceso al resto del sistema
+- Cerrar sesión (RF-038) — ⚠️ caso de uso obvio que no tenía RF asignado hasta esta revisión
 
 ### 4.9 Administración
-- Gestionar usuarios (crear, editar, asignar rol, desactivar)
-- Gestionar catálogo de tipos de servicio
-- Gestionar catálogo de categorías de repuestos
-- **Configurar las etapas del tablero kanban (crear, editar, reordenar, desactivar)** ✅ confirmado — ya no son fijas en código
+- Gestionar usuarios (crear, editar, asignar rol, desactivar) (RF-024)
+- Gestionar catálogos base: tipos de servicio y categorías de repuestos (RF-025)
+- **Configurar las etapas del tablero kanban (crear, editar, reordenar, desactivar)** ✅ confirmado (RF-035) — ya no son fijas en código
 
-### 4.10 Notificaciones
+### 4.10 Notificaciones (RF-026)
 ✅ Canales confirmados: **in-app, email y WhatsApp**. Se confirmó que deben dispararse **en cada acción relevante**. Candidatos derivados de los casos de uso ya definidos:
 - Orden creada / orden asignada o reasignada a un técnico
 - Orden movida de etapa en el kanban (ej. entra a "Requiere atención")
@@ -174,7 +171,7 @@ Alineados con el menú lateral confirmado en los mockups (`PANEL`, `ÓRDENES DE 
 
 > Pendiente definir: si todas las notificaciones anteriores aplican para todos los roles o solo para algunos, y los detalles de integración con el proveedor de WhatsApp Business API (ver actor A08 en requerimientos).
 
-### 4.11 Auditoría
+### 4.11 Auditoría (RF-027)
 - Registrar automáticamente cada cambio en una orden de trabajo (etapa, técnico asignado, checklist, repuestos)
 - Registrar automáticamente cada cambio en el presupuesto de una orden
 - Registrar automáticamente cada cambio de estado de un vehículo (activo / dado de baja)
@@ -217,6 +214,7 @@ Confirmadas por el equipo:
 
 ## 7. Próximos pasos
 
+- [x] Auditoría de coherencia entre casos de uso narrativos (sección 4) y RF formales, **en los 11 módulos** — se agregaron RF-037 (cola de órdenes) y RF-038 (cerrar sesión), se fusionaron líneas duplicadas en Vehículos/Administración, y se quitaron duplicados cruzados de módulo en Técnicos/Repuestos que en realidad pertenecían a Órdenes de trabajo
 - [ ] Conectar Lucid para construir el diagrama de clases (UML) y el diagrama de casos de uso completo de forma colaborativa
 - [ ] Confirmar lista definitiva de roles y matriz de permisos por rol
 - [ ] Confirmar si auditoría requiere pantalla de consulta dedicada

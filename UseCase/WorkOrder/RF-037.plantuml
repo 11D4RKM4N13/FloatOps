@@ -1,0 +1,36 @@
+@startuml RF-037
+!pragma layout smetana
+skinparam actorStyle awesome
+left to right direction
+
+title Caso de uso: RF-037 - Consultar cola de ordenes abiertas
+
+skinparam usecase {
+  BackgroundColor<<Alta>> LightSkyBlue
+  BorderColor<<Alta>> SteelBlue
+  BackgroundColor<<Media>> Khaki
+  BorderColor<<Media>> DarkKhaki
+  BackgroundColor<<Baja>> Gainsboro
+  BorderColor<<Baja>> Gray
+  ArrowColor SteelBlue
+}
+
+actor Despachador
+actor Administrador
+
+package "Ordenes de trabajo" {
+  usecase UC1 as "Consultar cola de\nordenes abiertas\n--\nMuestra las ordenes de\ntrabajo abiertas, no\ncompletadas." <<Alta>>
+}
+
+Despachador --> UC1
+Administrador --> UC1
+
+note right of UC1
+  **RF-037** - Prioridad: Alta
+  --
+  Criterios de aceptacion:
+  * Confirmado en el mockup (slide 4)
+  * Vista dividida: flota + cola de ordenes
+end note
+
+@enduml
