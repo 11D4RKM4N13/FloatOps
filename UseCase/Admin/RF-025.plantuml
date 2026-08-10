@@ -1,0 +1,33 @@
+@startuml RF-025
+!pragma layout smetana
+skinparam actorStyle awesome
+left to right direction
+
+title Caso de uso: RF-025 - Gestionar catalogos base
+
+skinparam usecase {
+  BackgroundColor<<Alta>> LightSkyBlue
+  BorderColor<<Alta>> SteelBlue
+  BackgroundColor<<Media>> Khaki
+  BorderColor<<Media>> DarkKhaki
+  BackgroundColor<<Baja>> Gainsboro
+  BorderColor<<Baja>> Gray
+  ArrowColor SteelBlue
+}
+
+actor Administrador
+
+package "Administracion" {
+  usecase UC1 as "Gestionar catalogos base\n--\nAdministra los catalogos de\ntipos de servicio y categorias\nde repuestos." <<Media>>
+}
+
+Administrador --> UC1
+
+note right of UC1
+  **RF-025** - Prioridad: Media
+  --
+  Criterios de aceptacion:
+  * Sin criterios adicionales definidos
+end note
+
+@enduml

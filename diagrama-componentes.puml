@@ -1,0 +1,58 @@
+@startuml diagrama-componentes
+!pragma layout smetana
+title FloatOps - Diagrama de Componentes (Contenedores)
+
+skinparam componentStyle rectangle
+
+package "Clientes" {
+  component "App Web\n(Panel Despachador /\nAdministrador)" as web
+  component "App Android\n(Vista Tecnico)" as mobile
+}
+
+package "Backend Quarkus" {
+  component "Controladores REST\n(Ordenes, Vehiculos,\nClientes, Tecnicos,\nRepuestos, Informes,\nAdministracion)" as controllers
+  component "Servicios de\nDominio / Reglas\nde Negocio" as services
+  component "Modulo de\nAutenticacion y Roles\n(integracion Keycloak)" as authModule
+  component "Modulo de\nNotificaciones" as notifModule
+  component "Modulo de\nAuditoria" as auditModule
+  component "Repositorios\n(Panache / JPA)" as repos
+}
+
+database "PostgreSQL" as db
+
+component "Keycloak\n(OIDC Provider)" as keycloak
+
+package "Integraciones Externas" {
+  component "WhatsApp\nBusiness API" as whatsapp
+  component "Servidor\nde Email" as email
+  component "Proveedor DIAN\n(Alegra / Siigo / Factus)" as dian
+}
+
+web --> controllers : HTTPS/REST
+mobile --> controllers : HTTPS/REST
+
+controllers --> services
+services --> repos
+services --> notifModule
+services --> auditModule
+repos --> db
+
+controllers --> authModule
+authModule --> keycloak : valida\ntoken JWT
+
+notifModule --> whatsapp
+notifModule --> email
+
+services --> dian : emision\nfacturas
+
+auditModule --> db : registro\nde cambios
+
+note bottom of services
+  Contiene la logica de las
+  11 modulos funcionales:
+  Panel, Ordenes, Vehiculos,
+  Clientes, Tecnicos, Repuestos,
+  Informes, Notificaciones, etc.
+end note
+
+@enduml

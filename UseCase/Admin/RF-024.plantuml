@@ -1,0 +1,33 @@
+@startuml RF-024
+!pragma layout smetana
+skinparam actorStyle awesome
+left to right direction
+
+title Caso de uso: RF-024 - Gestionar usuarios
+
+skinparam usecase {
+  BackgroundColor<<Alta>> LightSkyBlue
+  BorderColor<<Alta>> SteelBlue
+  BackgroundColor<<Media>> Khaki
+  BorderColor<<Media>> DarkKhaki
+  BackgroundColor<<Baja>> Gainsboro
+  BorderColor<<Baja>> Gray
+  ArrowColor SteelBlue
+}
+
+actor Administrador
+
+package "Administracion" {
+  usecase UC1 as "Gestionar usuarios\n--\nCrea, edita, asigna rol\ny desactiva usuarios." <<Alta>>
+}
+
+Administrador --> UC1
+
+note right of UC1
+  **RF-024** - Prioridad: Alta
+  --
+  Criterios de aceptacion:
+  * Sin criterios adicionales definidos
+end note
+
+@enduml

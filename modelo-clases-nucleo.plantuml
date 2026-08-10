@@ -1,0 +1,143 @@
+@startuml modelo-clases-nucleo
+!pragma layout smetana
+skinparam classAttributeIconSize 0
+left to right direction
+
+title FloatOps - Modelo de clases UML - Nucleo del taller
+
+enum TipoCliente {
+  EMPRESA
+  PERSONA_NATURAL
+}
+
+enum EstadoVehiculo {
+  ACTIVO
+  DADO_DE_BAJA
+}
+
+enum Prioridad {
+  ALTA
+  MEDIA
+  BAJA
+}
+
+class Client {
+  id : Long
+  nombre : String
+  tipo : TipoCliente
+  contacto : String
+  --
+  + registrar()
+  + editar()
+}
+
+class Vehicle {
+  id : Long
+  placa : String
+  vin : String
+  marca : String
+  modelo : String
+  tipo : String
+  kilometraje : Int
+  estado : EstadoVehiculo
+  --
+  + registrar()
+  + editar()
+  + darDeBaja()
+  + consultarHistorialOrdenes()
+}
+
+class WorkOrder {
+  id : Long
+  prioridad : Prioridad
+  descripcion : String
+  fechaProgramada : LocalDate
+  presupuesto : BigDecimal
+  cotizacionAprobada : Boolean
+  --
+  + crear()
+  + cambiarEtapa(nuevaEtapa)
+  + asignarTecnico(tecnico)
+  + reasignarTecnico(tecnico)
+  + calcularPresupuesto()
+  + aprobarCotizacion()
+}
+
+class Technician {
+  id : Long
+  nombre : String
+  especialidad : String
+  disponibilidad : Boolean
+  --
+  + registrar()
+  + editar()
+}
+
+class Stage {
+  id : Long
+  nombre : String
+  orden : Int
+  activo : Boolean
+  --
+  + crear()
+  + reordenar(posicion)
+  + desactivar()
+}
+
+class ChecklistItem {
+  id : Long
+  descripcion : String
+  completado : Boolean
+  orden : Int
+  --
+  + marcarCompletado()
+}
+
+class Photo {
+  id : Long
+  url : String
+  timestamp : LocalDateTime
+}
+
+class Part {
+  id : Long
+  codigo : String
+  nombre : String
+  stock : Int
+  precio : BigDecimal
+  --
+  + darDeAlta()
+  + actualizarStock(cantidad)
+}
+
+class WorkOrderPart {
+  id : Long
+  cantidad : Int
+}
+
+class ServiceType {
+  id : Long
+  nombre : String
+}
+
+class PartCategory {
+  id : Long
+  nombre : String
+}
+
+Client "1" o-- "0..N" Vehicle : posee
+Vehicle "1" -- "0..N" WorkOrder : genera
+Technician "1" -- "0..N" WorkOrder : atiende
+Stage "1" -- "0..N" WorkOrder : define etapa
+ServiceType "1" -- "0..N" WorkOrder : tipifica
+WorkOrder "1" *-- "0..N" ChecklistItem : contiene
+WorkOrder "1" *-- "0..N" Photo : contiene
+WorkOrder "1" *-- "0..N" WorkOrderPart : incluye
+Part "1" -- "0..N" WorkOrderPart : usado en
+PartCategory "1" o-- "0..N" Part : categoriza
+
+Client ..> TipoCliente
+Vehicle ..> EstadoVehiculo
+WorkOrder ..> Prioridad
+
+@enduml

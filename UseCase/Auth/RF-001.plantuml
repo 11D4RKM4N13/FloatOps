@@ -1,0 +1,38 @@
+@startuml RF-001
+!pragma layout smetana
+skinparam actorStyle awesome
+left to right direction
+
+title Caso de uso: RF-001 - Inicio de sesion con roles
+
+skinparam usecase {
+  BackgroundColor<<Alta>> LightSkyBlue
+  BorderColor<<Alta>> SteelBlue
+  BackgroundColor<<Media>> Khaki
+  BorderColor<<Media>> DarkKhaki
+  BackgroundColor<<Baja>> Gainsboro
+  BorderColor<<Baja>> Gray
+  ArrowColor SteelBlue
+}
+
+actor Administrador
+actor Despachador
+actor Tecnico
+
+package "Autenticacion y roles" {
+  usecase UC1 as "Inicio de sesion\ncon roles\n--\nPermite iniciar sesion y\nrestringe el acceso segun\nel rol del usuario." <<Alta>>
+}
+
+Administrador --> UC1
+Despachador --> UC1
+Tecnico --> UC1
+
+note right of UC1
+  **RF-001** - Prioridad: Alta
+  --
+  Criterios de aceptacion:
+  * Login via Keycloak/OIDC
+  * El tecnico solo ve sus ordenes asignadas en la vista movil
+end note
+
+@enduml

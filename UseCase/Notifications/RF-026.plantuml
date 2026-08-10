@@ -1,0 +1,38 @@
+@startuml RF-026
+!pragma layout smetana
+skinparam actorStyle awesome
+left to right direction
+
+title Caso de uso: RF-026 - Notificar acciones relevantes
+
+skinparam usecase {
+  BackgroundColor<<Alta>> LightSkyBlue
+  BorderColor<<Alta>> SteelBlue
+  BackgroundColor<<Media>> Khaki
+  BorderColor<<Media>> DarkKhaki
+  BackgroundColor<<Baja>> Gainsboro
+  BorderColor<<Baja>> Gray
+  ArrowColor SteelBlue
+}
+
+actor Administrador
+actor Despachador
+actor Tecnico
+
+package "Notificaciones" {
+  usecase UC1 as "Notificar acciones\nrelevantes\n--\nEnvia una notificacion ante\nacciones relevantes\ndel sistema." <<Alta>>
+}
+
+Administrador --> UC1
+Despachador --> UC1
+Tecnico --> UC1
+
+note right of UC1
+  **RF-026** - Prioridad: Alta
+  --
+  Criterios de aceptacion:
+  * Canales confirmados: in-app, email y WhatsApp
+  * Requiere integracion con proveedor de mensajeria (actor A08)
+end note
+
+@enduml

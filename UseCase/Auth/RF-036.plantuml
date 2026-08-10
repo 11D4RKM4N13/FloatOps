@@ -1,0 +1,38 @@
+@startuml RF-036
+!pragma layout smetana
+skinparam actorStyle awesome
+left to right direction
+
+title Caso de uso: RF-036 - Forzar actualizacion periodica de contrasena
+
+skinparam usecase {
+  BackgroundColor<<Alta>> LightSkyBlue
+  BorderColor<<Alta>> SteelBlue
+  BackgroundColor<<Media>> Khaki
+  BorderColor<<Media>> DarkKhaki
+  BackgroundColor<<Baja>> Gainsboro
+  BorderColor<<Baja>> Gray
+  ArrowColor SteelBlue
+}
+
+actor Administrador
+actor Despachador
+actor Tecnico
+
+package "Autenticacion y roles" {
+  usecase UC1 as "Forzar actualizacion\nperiodica de contrasena\n--\nExige actualizar la contrasena\ncada 30 dias; si no, el usuario\nqueda inhabilitado." <<Alta>>
+}
+
+Administrador --> UC1
+Despachador --> UC1
+Tecnico --> UC1
+
+note right of UC1
+  **RF-036** - Prioridad: Alta
+  --
+  Criterios de aceptacion:
+  * Si pasan 30 dias sin actualizar, el usuario queda inhabilitado
+  * Login con contrasena vencida redirige directo a actualizarla
+end note
+
+@enduml
