@@ -1,0 +1,54 @@
+{
+  "realm": "floatops",
+  "enabled": true,
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "roles": {
+    "realm": [
+      {
+        "name": "administrador",
+        "description": "Acceso total: usuarios, catalogos base, etapas del kanban (RF-024, RF-025, RF-035)"
+      },
+      {
+        "name": "despachador",
+        "description": "Crea y gestiona ordenes, vehiculos, clientes, repuestos dentro de ordenes"
+      },
+      {
+        "name": "tecnico",
+        "description": "Vista movil: orden asignada, checklist, fotos, notas (RF-011 a RF-015)"
+      },
+      {
+        "name": "supervisor-gerente",
+        "description": "Solo lectura amplia, aprueba cotizaciones de alto valor (RF-039)"
+      },
+      {
+        "name": "contador-facturacion",
+        "description": "Informes, costos, futura facturacion DIAN"
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "floatops-api",
+      "name": "FloatOps API (Quarkus)",
+      "enabled": true,
+      "publicClient": false,
+      "protocol": "openid-connect",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": true,
+      "redirectUris": ["http://localhost:8080/*"],
+      "webOrigins": ["http://localhost:8080"]
+    },
+    {
+      "clientId": "floatops-web",
+      "name": "FloatOps Dashboard (Compose Web)",
+      "enabled": true,
+      "publicClient": true,
+      "protocol": "openid-connect",
+      "standardFlowEnabled": true,
+      "redirectUris": ["http://localhost:3000/*"],
+      "webOrigins": ["http://localhost:3000"]
+    }
+  ]
+}
