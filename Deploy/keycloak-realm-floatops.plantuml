@@ -1,0 +1,64 @@
+@startuml keycloak-realm-floatops
+!pragma layout smetana
+left to right direction
+
+title FloatOps - Autenticacion: Realm de Keycloak
+
+skinparam component {
+  BackgroundColor<<publico>> LightSkyBlue
+  BorderColor<<publico>> SteelBlue
+  BackgroundColor<<confidencial>> Khaki
+  BorderColor<<confidencial>> DarkKhaki
+}
+
+actor Despachador
+actor Administrador
+actor Tecnico
+
+package "Apps" {
+  component WebDashboard
+  component MobileApp
+  component QuarkusAPI
+}
+
+package "Keycloak - Realm floatops" {
+  component "floatops-web" as ClientWeb <<publico>>
+  component "floatops-mobile" as ClientMobile <<publico>>
+  component "floatops-api" as ClientApi <<confidencial>>
+}
+
+Despachador --> WebDashboard
+Administrador --> WebDashboard
+Tecnico --> MobileApp
+
+WebDashboard ..> ClientWeb : autentica via
+MobileApp ..> ClientMobile : autentica via
+QuarkusAPI ..> ClientApi : valida tokens con
+
+note bottom of ClientWeb
+  Sin secreto (publico).
+  Corre en el navegador,
+  authorization code flow.
+end note
+
+note bottom of ClientMobile
+  Sin secreto (publico).
+  App nativa, redirect URI
+  tipo floatops://callback.
+  Falta agregar al realm JSON.
+end note
+
+note bottom of ClientApi
+  Tiene secreto (confidencial).
+  Backend controlado por
+  nosotros, valida tokens.
+end note
+
+note right of ClientApi
+  5 roles del realm:
+  administrador, despachador,
+  tecnico, supervisor-gerente,
+  contador-facturacion
+end note
+
+@enduml

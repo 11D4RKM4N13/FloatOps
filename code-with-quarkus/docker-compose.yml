@@ -1,0 +1,54 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: floatops-postgres
+    environment:
+      POSTGRES_DB: floatops
+      POSTGRES_USER: floatops
+      POSTGRES_PASSWORD: floatops
+    ports:
+      - "5433:5432"
+    volumes:
+      - floatops_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U floatops"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.7.1
+    container_name: floatops-keycloak
+    command: start-dev --import-realm
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+    ports:
+      # 8081 en el host para no chocar con Quarkus dev mode, que tambien usa 8080
+      - "8081:8080"
+    volumes:
+      - ./keycloak/floatops-realm.json:/opt/keycloak/data/import/floatops-realm.json:ro
+
+  quarkus-api:
+    # El docker-compose.yml vive dentro de la carpeta del proyecto Quarkus
+    # (junto al pom.xml), por eso el contexto es "." y no una subcarpeta.
+    build:
+      context: .
+      dockerfile: src/main/docker/Dockerfile.jvm
+    container_name: floatops-api
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_started
+    environment:
+      QUARKUS_DATASOURCE_JDBC_URL: jdbc:postgresql://postgres:5432/floatops
+      QUARKUS_DATASOURCE_USERNAME: floatops
+      QUARKUS_DATASOURCE_PASSWORD: floatops
+      QUARKUS_OIDC_AUTH_SERVER_URL: http://keycloak:8080/realms/floatops
+      QUARKUS_OIDC_CLIENT_ID: floatops-api
+    ports:
+      - "8080:8080"
+
+volumes:
+  floatops_pg_data:
