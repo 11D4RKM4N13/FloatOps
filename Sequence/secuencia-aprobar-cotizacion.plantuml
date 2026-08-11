@@ -1,0 +1,40 @@
+@startuml secuencia-aprobar-cotizacion
+title FloatOps - Secuencia - Aprobar cotizacion (RF-033)
+
+actor Despachador
+participant WebDashboard
+participant WorkOrderResource
+participant WorkOrderService
+participant WorkOrderRepository
+participant NotificationService
+participant AuditService
+database PostgreSQL
+
+note over Despachador
+  El cliente confirma la cotizacion
+  de forma presencial o telefonica,
+  fuera del sistema (no tiene login).
+end note
+
+Despachador -> WebDashboard : marca cotizacion como aprobada\nen el detalle de la orden
+WebDashboard -> WorkOrderResource : PATCH /work-orders/{id}/cotizacion
+WorkOrderResource -> WorkOrderService : aprobarCotizacion(id)
+
+WorkOrderService -> WorkOrderRepository : findById(id)
+WorkOrderRepository -> PostgreSQL : SELECT
+PostgreSQL --> WorkOrderRepository : workOrder
+WorkOrderRepository --> WorkOrderService : workOrder
+
+WorkOrderService -> WorkOrderService : cotizacionAprobada = true
+
+WorkOrderService -> WorkOrderRepository : persist(workOrder)
+WorkOrderRepository -> PostgreSQL : UPDATE
+
+WorkOrderService -> NotificationService : enviar(cotizacion aprobada)\n(RF-026)
+WorkOrderService -> AuditService : registrar(cambio)\n(RF-027)
+
+WorkOrderService --> WorkOrderResource : ok
+WorkOrderResource --> WebDashboard : 200 OK
+WebDashboard --> Despachador : confirmacion
+
+@enduml

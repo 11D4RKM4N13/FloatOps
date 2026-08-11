@@ -54,7 +54,7 @@ Alineados con el menú lateral confirmado en los mockups (`PANEL`, `ÓRDENES DE 
 
 | Módulo | Estado | Notas |
 |---|---|---|
-| Autenticación y roles | ✅ Requerido | Login con roles diferenciados. Roles concretos aún por confirmar (ver sección 6) |
+| Autenticación y roles | ✅ Requerido | Login con roles diferenciados. ✅ Ahora son 5 roles: administrador, despachador, técnico, supervisor/gerente, contador/facturación — matriz de permisos por rol aún por confirmar (ver sección 6) |
 | Notificaciones | ✅ Requerido | Notificaciones en cada acción relevante del sistema |
 | Auditoría | ✅ Requerido (obligatorio) | Trazabilidad de cambios en órdenes, presupuestos y estado de vehículos |
 | Administración | ✅ Requerido | Gestión de usuarios y catálogos base (tipos de servicio, categorías de repuestos) |
@@ -66,8 +66,8 @@ Alineados con el menú lateral confirmado en los mockups (`PANEL`, `ÓRDENES DE 
 | Entidad | Campos clave | Relaciones | Notas |
 |---|---|---|---|
 | `Vehicle` | placa, VIN, marca, modelo, tipo, kilometraje, **estado (activo / dado de baja)** | 1—N `WorkOrder`, N—1 `Client` | Registro/edición y baja de vehículo confirmados como requeridos; campos inferidos a partir del perfil de vehículo visto en el mockup (placa, VIN, marca/modelo, tipo, kilometraje). **Actualización:** FloatOps es un taller de reparación que atiende tanto empresas con flota como personas naturales — ver `Client` |
-| `Client` | nombre, **tipo (empresa / persona natural)**, datos de contacto | 1—N `Vehicle` | ✅ Confirmado: no requiere login ni portal propio. Interactúa presencialmente en el establecimiento o por otro medio de comunicación (ej. teléfono); el despachador registra sus datos. Un cliente de paso (no recurrente) usa los mismos campos obligatorios que cualquier cliente — sin flujo simplificado. Se asocia al vehículo de forma inline desde el formulario de registro de vehículo (⚠️ asunción de diseño) |
-| `WorkOrder` | prioridad, descripción del problema, tipo de servicio, fecha programada, presupuesto, **cotización aprobada (booleano)** | N—1 `Vehicle`, N—1 `Technician`, N—1 `Stage`, 1—N `ChecklistItem`, 1—N `Photo`, 1—N `WorkOrderPart` | ✅ Técnico se puede reasignar en cualquier etapa (restringido a Despachador/Administrador). ✅ La cotización requiere aprobación del cliente, registrada manualmente por el despachador (el cliente no tiene acceso al sistema) — ⚠️ pendiente confirmar si bloquea el avance a "En taller" |
+| `Client` | nombre, **tipo (empresa / persona natural)**, datos de contacto | 1—N `Vehicle` | ✅ Confirmado: no requiere login ni portal propio. Interactúa presencialmente en el establecimiento o por otro medio de comunicación (ej. teléfono); el despachador registra sus datos. Un cliente de paso (no recurrente) usa los mismos campos obligatorios que cualquier cliente — sin flujo simplificado. ✅ Se asocia al vehículo por dos caminos confirmados: pantalla dedicada de gestión de clientes, o atajo inline desde el formulario de registro de vehículo |
+| `WorkOrder` | prioridad, descripción del problema, tipo de servicio, fecha programada, presupuesto, **cotización aprobada (booleano)**, **lista para revisión (booleano)** | N—1 `Vehicle`, N—1 `Technician`, N—1 `Stage`, 1—N `ChecklistItem`, 1—N `Photo`, 1—N `WorkOrderPart` | ✅ Técnico se puede reasignar en cualquier etapa (restringido a Despachador/Administrador). ✅ La cotización requiere aprobación del cliente, registrada manualmente por el despachador (el cliente no tiene acceso al sistema) — ⚠️ pendiente confirmar si bloquea el avance a "En taller" (depende de un criterio aún por explicar). ✅ El técnico marca `listaParaRevision=true` desde móvil; el despachador completa la orden por separado (RF-031), para no chocar con la restricción de rol sobre cambio de etapa |
 | `Stage` | nombre, orden/posición, activo | 1—N `WorkOrder` | ✅ Nueva entidad: las etapas del kanban ya no son un enum fijo, son un catálogo configurable por el Administrador. Los 4 valores vistos en el mockup (Requiere atención, Programado, En taller, Completados) son la configuración inicial por defecto, no un límite |
 | `Technician` | nombre, especialidad, disponibilidad | 1—N `WorkOrder` | CRUD completo confirmado; el listado/perfil se visualiza **en un modal** desde el panel |
 | `ChecklistItem` | descripción, completado, orden | N—1 `WorkOrder` | Estado exacto de "completado" aún no visto explícitamente en el mockup (⚠️ inferido del checkbox) |
@@ -114,14 +114,14 @@ Alineados con el menú lateral confirmado en los mockups (`PANEL`, `ÓRDENES DE 
 - Marcar ítems del checklist de una orden (RF-012)
 - Consultar orden asignada (vista móvil, técnico) (RF-013)
 - Agregar foto y notas a la orden desde la vista móvil (RF-014)
-- Cambiar estado / completar orden desde móvil — ❓ **se define más adelante** (RF-015, queda pendiente, no bloquea el MVP)
+- **Marcar orden lista para revisión desde móvil** ✅ confirmado (RF-015) — el técnico no completa la orden directamente; el despachador la completa por separado moviendo la etapa (RF-031)
 
 > Nota de auditoría: se quitó "Validar campos obligatorios al crear una orden" como línea aparte — es un criterio de aceptación de RF-006/RF-007, no un caso de uso independiente. "Agregar foto desde móvil" y "Agregar notas desde móvil" se fusionaron en una sola línea porque ambas corresponden al mismo RF-014.
 
 ### 4.3 Vehículos
 - Consultar lista de flota (RF-016)
 - Consultar perfil de vehículo (identificación, placa, VIN, tipo, kilometraje), incluyendo historial de órdenes y contador de órdenes abiertas del vehículo (RF-017)
-- **Registrar / editar un vehículo** ✅ confirmado (RF-018) — campos inferidos del perfil visto en el mockup: placa, VIN, marca, modelo, tipo, kilometraje. Incluye seleccionar o crear inline el cliente dueño del vehículo (⚠️ asunción de diseño, a confirmar)
+- **Registrar / editar un vehículo** ✅ confirmado (RF-018) — campos inferidos del perfil visto en el mockup: placa, VIN, marca, modelo, tipo, kilometraje. Incluye seleccionar o crear inline el cliente dueño del vehículo como atajo — ✅ confirmado que coexiste con la pantalla dedicada de gestión de clientes (RF-030)
 - **Dar de baja un vehículo** ✅ confirmado (RF-019) — requiere campo de estado en `Vehicle`
 - **Filtrar listado de vehículos con filtros avanzados (cliente, tipo, estado, etc.)** ✅ confirmado (RF-034) — lista completa de criterios pendiente de definir
 
@@ -142,12 +142,16 @@ Alineados con el menú lateral confirmado en los mockups (`PANEL`, `ÓRDENES DE 
 > Nota de auditoría: se quitaron "Consultar catálogo de repuestos dentro del formulario de orden" y "Seleccionar repuestos para una orden" de esta sección — son RF-007/RF-010, ya documentados en Órdenes de trabajo. Estaban duplicados aquí.
 
 ### 4.7 Informes
-- **Deben existir, basados en la información almacenada en el sistema** ✅ confirmado (RF-023) — alcance específico (qué reportes, qué filtros, qué exportaciones) pendiente de definir. Candidatos naturales según el modelo de datos ya definido:
+- **Deben existir, basados en la información almacenada en el sistema** ✅ confirmado (RF-023) — alcance de MVP confirmado: 2 informes priorizados:
   - Órdenes por técnico / por período
   - Tiempo promedio de resolución por tipo de servicio
+
+  Candidatos que quedan para una siguiente iteración (no en el MVP):
   - Gasto en repuestos por vehículo o por período
   - Vehículos con mayor frecuencia de incidencias
   - Cumplimiento de mantenimiento programado (a tiempo / atrasado)
+
+  ⚠️ Filtros y formato de exportación de los 2 informes del MVP aún por definir.
 
 ### 4.8 Autenticación y roles
 - Iniciar sesión con credenciales, restringiendo el acceso a módulos/acciones según el rol del usuario (RF-001) — ej. un técnico solo ve sus órdenes asignadas en móvil
@@ -181,7 +185,9 @@ Alineados con el menú lateral confirmado en los mockups (`PANEL`, `ÓRDENES DE 
 
 ---
 
-## 5. Diagrama de estados — Orden de trabajo
+## 5. Diagramas de estado
+
+### 5.1 Orden de trabajo (etapa del kanban)
 
 ```mermaid
 stateDiagram-v2
@@ -199,15 +205,61 @@ stateDiagram-v2
 
 > Solo se confirma la secuencia hacia adelante de la configuración **por defecto** (columnas reales del kanban vistas en el mockup: `Requiere atención`, `Programado`, `En taller`, `Completados`). ✅ Las etapas ahora son un catálogo configurable (`Stage`) — un administrador puede agregar, renombrar o reordenar etapas, por lo que este diagrama representa la configuración inicial, no una secuencia fija en código. No hay evidencia de si se permite retroceder o saltar etapas dentro de una configuración dada.
 
+### 5.2 Asignación de técnico
+
+```mermaid
+stateDiagram-v2
+    [*] --> SinAsignar
+    SinAsignar --> Asignado: asignar técnico (RF-008)
+    Asignado --> Asignado: reasignar (RF-032)
+
+    note right of Asignado
+        Restringido a Despachador/Administrador.
+        El Técnico no puede reasignar.
+    end note
+```
+
+> No hay evidencia de un camino de regreso a "Sin asignar" una vez asignada la orden — solo reasignación a otro técnico.
+
+### 5.3 Aprobación de cotización
+
+```mermaid
+stateDiagram-v2
+    [*] --> Pendiente: crear orden
+    Pendiente --> AprobadaPorCliente: despachador registra aprobación (RF-033)
+    AprobadaPorCliente --> Aprobada: monto bajo el umbral
+    AprobadaPorCliente --> PendienteSupervisor: monto sobre el umbral de alto valor
+    PendienteSupervisor --> Aprobada: supervisor/gerente aprueba (RF-039)
+
+    note right of PendienteSupervisor
+        Bloquea el avance de la orden
+        a "En taller" hasta esta
+        aprobación adicional
+    end note
+```
+
+> ✅ Confirmado: el criterio de bloqueo es el **valor de la cotización**. Si supera un umbral (⚠️ monto exacto pendiente), la orden no avanza a "En taller" sin la aprobación adicional de Supervisor/Gerente (RF-039), además de la aprobación del cliente (RF-033). Por debajo del umbral, solo requiere la aprobación del cliente.
+
+### 5.4 Estado del vehículo
+
+```mermaid
+stateDiagram-v2
+    [*] --> Activo: registrar vehículo (RF-018)
+    Activo --> DadoDeBaja: dar de baja (RF-019)
+    DadoDeBaja --> [*]
+```
+
+> No hay evidencia de un flujo de reactivación de un vehículo dado de baja.
+
 ---
 
 ## 6. Decisiones sobre módulos transversales
 
 Confirmadas por el equipo:
 
-1. **Autenticación y roles:** ✅ el sistema requiere login con roles diferenciados. Roles propuestos como punto de partida (`administrador`, `despachador`, `técnico`) — ⚠️ **lista definitiva de roles y permisos por rol aún pendiente de confirmar**. ✅ Además, la contraseña debe rotarse cada 30 días o el usuario queda inhabilitado hasta actualizarla.
+1. **Autenticación y roles:** ✅ el sistema requiere login con roles diferenciados. ✅ Ahora son 5 roles confirmados: `administrador`, `despachador`, `técnico`, `supervisor/gerente`, `contador/facturación` — ⚠️ **matriz de permisos por rol aún pendiente de confirmar**. ✅ Además, la contraseña debe rotarse cada 30 días o el usuario queda inhabilitado hasta actualizarla.
 2. **Notificaciones:** ✅ requeridas en cada acción relevante del sistema, por los canales **in-app, email y WhatsApp** (ver lista de candidatos en 4.10).
-3. **Auditoría:** ✅ obligatoria para órdenes, presupuestos y estado de vehículos — ⚠️ **pendiente confirmar si se necesita una pantalla de consulta o solo registro interno**.
+3. **Auditoría:** ✅ obligatoria para órdenes, presupuestos y estado de vehículos. ✅ Confirmado: sí requiere pantalla de consulta dedicada para administradores.
 4. **Administración:** ✅ debe existir pantalla de gestión de usuarios, catálogos base (tipos de servicio, categorías de repuestos) **y ahora también de las etapas del kanban** (ver `Stage`).
 
 ---
@@ -215,12 +267,15 @@ Confirmadas por el equipo:
 ## 7. Próximos pasos
 
 - [x] Auditoría de coherencia entre casos de uso narrativos (sección 4) y RF formales, **en los 11 módulos** — se agregaron RF-037 (cola de órdenes) y RF-038 (cerrar sesión), se fusionaron líneas duplicadas en Vehículos/Administración, y se quitaron duplicados cruzados de módulo en Técnicos/Repuestos que en realidad pertenecían a Órdenes de trabajo
+- [x] Diagramas de estado de Panel y Órdenes de trabajo: Panel no tiene entidad propia con ciclo de vida (sin diagrama); Órdenes de trabajo cubierto con etapa del kanban, asignación de técnico y aprobación de cotización (sección 5.1 a 5.3)
 - [ ] Conectar Lucid para construir el diagrama de clases (UML) y el diagrama de casos de uso completo de forma colaborativa
-- [ ] Confirmar lista definitiva de roles y matriz de permisos por rol
-- [ ] Confirmar si auditoría requiere pantalla de consulta dedicada
-- [ ] Confirmar si la cotización sin aprobar bloquea el avance a la etapa "En taller"
-- [ ] Definir el flujo de "completar orden" desde la vista móvil
-- [ ] Definir alcance detallado del módulo de Informes (qué reportes, filtros, exportación)
-- [ ] Confirmar si la asociación vehículo-cliente debe ser inline (formulario de vehículo) o en pantallas separadas
+- [ ] Confirmar matriz de permisos de los 5 roles (administrador, despachador, técnico, supervisor/gerente, contador/facturación)
+- [x] Confirmar si auditoría requiere pantalla de consulta dedicada — sí, para administradores
+- [ ] Confirmar el criterio exacto que determina si la cotización sin aprobar bloquea el avance a "En taller" (confirmado que "depende", falta el criterio)
+- [x] Definir el flujo de "completar orden" desde la vista móvil — técnico marca lista para revisión, despachador completa
+- [x] Definir alcance detallado del módulo de Informes — 2 informes confirmados para MVP (⚠️ falta definir filtros/exportación)
+- [x] Confirmar si la asociación vehículo-cliente debe ser inline o en pantallas separadas — ambas coexisten
 - [ ] Definir integración concreta con proveedor de WhatsApp Business API
+- [x] DIAN — confirmado fuera del MVP, siguiente iteración
+- [x] Diagrama de estado del vehículo (sección 5.4)
 - [ ] Diseñar mockups faltantes: gestión de vehículos (alta/edición/baja), gestión de clientes, gestión de técnicos, gestión de repuestos/inventario, informes, login (incluida pantalla de actualización forzada de contraseña), administración (usuarios/catálogos/etapas del kanban), notificaciones, auditoría
