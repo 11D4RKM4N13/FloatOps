@@ -1,0 +1,37 @@
+@startuml RF-011
+!pragma layout smetana
+skinparam actorStyle awesome
+left to right direction
+
+title Caso de uso: RF-011 - Consultar detalle de orden
+
+skinparam usecase {
+  BackgroundColor<<Alta>> LightSkyBlue
+  BorderColor<<Alta>> SteelBlue
+  BackgroundColor<<Media>> Khaki
+  BorderColor<<Media>> DarkKhaki
+  BackgroundColor<<Baja>> Gainsboro
+  BorderColor<<Baja>> Gray
+  ArrowColor SteelBlue
+}
+
+actor Despachador
+actor Administrador
+actor Tecnico
+
+package "Ordenes de trabajo" {
+  usecase UC1 as "Consultar detalle de orden\n--\nMuestra descripcion, checklist,\ntecnico, vehiculo, fechas e\nhistorial de servicio." <<Alta>>
+}
+
+Despachador --> UC1
+Administrador --> UC1
+Tecnico --> UC1
+
+note right of UC1
+  **RF-011** - Prioridad: Alta
+  --
+  Criterios de aceptacion:
+  * Incluye estado (ej. atrasado) y fechas de creacion/vencimiento
+end note
+
+@enduml

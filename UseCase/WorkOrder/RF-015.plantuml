@@ -1,0 +1,34 @@
+@startuml RF-015
+!pragma layout smetana
+skinparam actorStyle awesome
+left to right direction
+
+title Caso de uso: RF-015 - Completar orden desde movil
+
+skinparam usecase {
+  BackgroundColor<<Alta>> LightSkyBlue
+  BorderColor<<Alta>> SteelBlue
+  BackgroundColor<<Media>> Khaki
+  BorderColor<<Media>> DarkKhaki
+  BackgroundColor<<Baja>> Gainsboro
+  BorderColor<<Baja>> Gray
+  ArrowColor SteelBlue
+}
+
+actor Tecnico
+
+package "Ordenes de trabajo" {
+  usecase UC1 as "Completar orden\ndesde movil\n--\nMarca la orden como finalizada\ndesde la vista movil." <<Baja>>
+}
+
+Tecnico --> UC1
+
+note right of UC1
+  **RF-015** - Prioridad: Baja
+  --
+  Criterios de aceptacion:
+  * Flujo exacto pendiente de definir
+  * No bloquea el MVP
+end note
+
+@enduml

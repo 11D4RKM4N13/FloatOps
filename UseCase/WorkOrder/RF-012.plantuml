@@ -1,0 +1,35 @@
+@startuml RF-012
+!pragma layout smetana
+skinparam actorStyle awesome
+left to right direction
+
+title Caso de uso: RF-012 - Actualizar checklist de la orden
+
+skinparam usecase {
+  BackgroundColor<<Alta>> LightSkyBlue
+  BorderColor<<Alta>> SteelBlue
+  BackgroundColor<<Media>> Khaki
+  BorderColor<<Media>> DarkKhaki
+  BackgroundColor<<Baja>> Gainsboro
+  BorderColor<<Baja>> Gray
+  ArrowColor SteelBlue
+}
+
+actor Despachador
+actor Tecnico
+
+package "Ordenes de trabajo" {
+  usecase UC1 as "Actualizar checklist\nde la orden\n--\nMarca como completado cada\nitem del checklist de tareas\nde una orden." <<Alta>>
+}
+
+Despachador --> UC1
+Tecnico --> UC1
+
+note right of UC1
+  **RF-012** - Prioridad: Alta
+  --
+  Criterios de aceptacion:
+  * El estado de cada item se persiste individualmente
+end note
+
+@enduml

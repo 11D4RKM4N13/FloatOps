@@ -1,0 +1,35 @@
+@startuml secuencia-crear-orden
+title FloatOps - Secuencia - Crear orden de trabajo (RF-006/RF-007)
+
+actor Despachador
+participant WebDashboard
+participant WorkOrderResource
+participant WorkOrderService
+participant WorkOrderRepository
+participant NotificationService
+participant AuditService
+database PostgreSQL
+
+Despachador -> WebDashboard : completa formulario\n(vehiculo, servicio, tecnico, repuestos)
+WebDashboard -> WorkOrderResource : POST /work-orders
+WorkOrderResource -> WorkOrderService : crear(datos)
+
+WorkOrderService -> WorkOrderService : calcularPresupuesto()\n(RF-010)
+
+WorkOrderService -> WorkOrderRepository : persist(workOrder)
+WorkOrderRepository -> PostgreSQL : INSERT
+
+WorkOrderService -> NotificationService : enviar(orden creada)\n(RF-026)
+WorkOrderService -> AuditService : registrar(creacion)\n(RF-027)
+
+WorkOrderService --> WorkOrderResource : WorkOrder creada
+WorkOrderResource --> WebDashboard : 201 Created
+WebDashboard --> Despachador : confirmacion
+
+note over WorkOrderService, AuditService
+  La cotizacion registrada (RF-029) reutiliza
+  el mismo presupuesto calculado en este flujo,
+  no es un calculo independiente.
+end note
+
+@enduml

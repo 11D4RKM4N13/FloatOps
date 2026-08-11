@@ -1,0 +1,471 @@
+openapi: 3.0.3
+info:
+  title: FloatOps API - Ordenes de trabajo
+  description: >
+    Contrato de la API REST para el recurso WorkOrder. Cubre el modulo
+    Ordenes de trabajo (RF-004 a RF-015, RF-031 a RF-033, RF-037, RF-039).
+    Se usa como porcion representativa del patron de contrato que se
+    replicara para Vehiculos, Clientes, Tecnicos y Repuestos.
+  version: "0.1.0"
+
+servers:
+  - url: https://api.floatops.com/v1
+    description: Produccion (conceptual, no confirmado)
+  - url: http://localhost:8080/v1
+    description: Desarrollo local (Quarkus dev mode)
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: work-orders
+    description: Gestion del ciclo de vida de una orden de trabajo
+
+paths:
+  /work-orders:
+    get:
+      operationId: listWorkOrders
+      summary: Listar ordenes de trabajo
+      description: >
+        Cubre RF-037 (cola de ordenes abiertas) y sirve de base para el
+        tablero kanban (RF-004) agrupando por el parametro stageId.
+      tags: [work-orders]
+      parameters:
+        - name: stageId
+          in: query
+          description: Filtra por etapa (catalogo Stage, RF-035)
+          schema:
+            type: string
+            format: uuid
+        - name: technicianId
+          in: query
+          description: Filtra por tecnico asignado. Usar "me" en la vista movil (RF-013).
+          schema:
+            type: string
+        - name: status
+          in: query
+          description: "open = no completadas (RF-037)"
+          schema:
+            type: string
+            enum: [open, all]
+            default: open
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Listado paginado de ordenes
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/WorkOrderSummary"
+                  total:
+                    type: integer
+
+    post:
+      operationId: createWorkOrder
+      summary: Crear orden de trabajo
+      description: >
+        Cubre RF-006 (modal rapido) y RF-007 (formulario completo). El
+        mismo endpoint acepta ambos casos: technicianId y parts son
+        opcionales para el modal rapido, y se esperan completos para el
+        formulario completo (que ademas dispara el calculo de
+        presupuesto, RF-010, y RF-029 registro de cotizacion).
+      tags: [work-orders]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WorkOrderCreate"
+      responses:
+        "201":
+          description: Orden creada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkOrder"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+
+  /work-orders/{workOrderId}:
+    parameters:
+      - $ref: "#/components/parameters/WorkOrderId"
+    get:
+      operationId: getWorkOrder
+      summary: Consultar detalle de orden
+      description: Cubre RF-011.
+      tags: [work-orders]
+      responses:
+        "200":
+          description: Detalle completo de la orden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkOrder"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /work-orders/{workOrderId}/stage:
+    parameters:
+      - $ref: "#/components/parameters/WorkOrderId"
+    patch:
+      operationId: changeWorkOrderStage
+      summary: Cambiar etapa de la orden
+      description: >
+        Cubre RF-005 (drag and drop en kanban) y RF-031 (boton en el
+        detalle) - mismo endpoint para ambos disparadores de UI.
+        Requiere rol Despachador o Administrador. Si la cotizacion es
+        de alto valor y no tiene aprobacion de Supervisor/Gerente
+        (RF-039), la API debe rechazar el cambio a la etapa "En taller".
+      tags: [work-orders]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [stageId]
+              properties:
+                stageId:
+                  type: string
+                  format: uuid
+      responses:
+        "200":
+          description: Etapa actualizada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkOrder"
+        "409":
+          description: >
+            Bloqueado por cotizacion de alto valor sin aprobacion de
+            Supervisor/Gerente (RF-033/RF-039).
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /work-orders/{workOrderId}/technician:
+    parameters:
+      - $ref: "#/components/parameters/WorkOrderId"
+    put:
+      operationId: assignTechnician
+      summary: Asignar o reasignar tecnico
+      description: >
+        Cubre RF-008 (asignacion al crear) y RF-032 (reasignacion en
+        cualquier etapa). Requiere rol Despachador o Administrador
+        (matriz de permisos, seccion 2.1).
+      tags: [work-orders]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [technicianId]
+              properties:
+                technicianId:
+                  type: string
+                  format: uuid
+      responses:
+        "200":
+          description: Tecnico asignado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkOrder"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /work-orders/{workOrderId}/quote-approval:
+    parameters:
+      - $ref: "#/components/parameters/WorkOrderId"
+    post:
+      operationId: registerClientQuoteApproval
+      summary: Registrar aprobacion del cliente sobre la cotizacion
+      description: >
+        Cubre RF-033. El cliente no tiene acceso al sistema; este
+        endpoint lo usa el Despachador para registrar una confirmacion
+        obtenida presencial o telefonicamente.
+      tags: [work-orders]
+      responses:
+        "200":
+          description: Cotizacion marcada como aprobada por el cliente
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkOrder"
+
+  /work-orders/{workOrderId}/supervisor-approval:
+    parameters:
+      - $ref: "#/components/parameters/WorkOrderId"
+    post:
+      operationId: registerSupervisorQuoteApproval
+      summary: Aprobar cotizacion de alto valor
+      description: >
+        Cubre RF-039. Requiere rol Supervisor/Gerente. Solo aplica
+        cuando el presupuesto de la orden supera el umbral configurado
+        (pendiente de definir el valor exacto).
+      tags: [work-orders]
+      responses:
+        "200":
+          description: Cotizacion aprobada por Supervisor/Gerente
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkOrder"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /work-orders/{workOrderId}/checklist/{itemId}:
+    parameters:
+      - $ref: "#/components/parameters/WorkOrderId"
+      - name: itemId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    patch:
+      operationId: updateChecklistItem
+      summary: Marcar item del checklist
+      description: Cubre RF-012.
+      tags: [work-orders]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [completado]
+              properties:
+                completado:
+                  type: boolean
+      responses:
+        "200":
+          description: Item de checklist actualizado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChecklistItem"
+
+  /work-orders/{workOrderId}/photos:
+    parameters:
+      - $ref: "#/components/parameters/WorkOrderId"
+    post:
+      operationId: attachPhoto
+      summary: Adjuntar foto a la orden
+      description: Cubre RF-009 (creacion/edicion) y RF-014 (vista movil).
+      tags: [work-orders]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        "201":
+          description: Foto adjuntada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Photo"
+
+  /work-orders/{workOrderId}/notes:
+    parameters:
+      - $ref: "#/components/parameters/WorkOrderId"
+    post:
+      operationId: addNote
+      summary: Agregar nota desde vista movil
+      description: Cubre RF-014.
+      tags: [work-orders]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [texto]
+              properties:
+                texto:
+                  type: string
+      responses:
+        "201":
+          description: Nota agregada
+
+  /work-orders/{workOrderId}/ready-for-review:
+    parameters:
+      - $ref: "#/components/parameters/WorkOrderId"
+    post:
+      operationId: markReadyForReview
+      summary: Marcar orden lista para revision
+      description: >
+        Cubre RF-015. Accion del Tecnico. No completa la orden - eso lo
+        hace el Despachador por separado via PATCH /stage (RF-031).
+      tags: [work-orders]
+      responses:
+        "200":
+          description: Orden marcada lista para revision
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkOrder"
+
+components:
+  parameters:
+    WorkOrderId:
+      name: workOrderId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  responses:
+    NotFound:
+      description: Recurso no encontrado
+    Forbidden:
+      description: >
+        El rol del usuario autenticado no tiene permiso para esta
+        accion (ver matriz de permisos, requerimientos seccion 2.1).
+    ValidationError:
+      description: Error de validacion de campos obligatorios
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Token OIDC emitido por Keycloak (RF-001).
+
+  schemas:
+    Prioridad:
+      type: string
+      enum: [ALTA, MEDIA, BAJA]
+
+    WorkOrderCreate:
+      type: object
+      required: [vehicleId, tipoServicio, descripcion, prioridad]
+      properties:
+        vehicleId:
+          type: string
+          format: uuid
+        tipoServicio:
+          type: string
+          description: Referencia a ServiceType (catalogo, RF-025)
+        descripcion:
+          type: string
+        prioridad:
+          $ref: "#/components/schemas/Prioridad"
+        fechaProgramada:
+          type: string
+          format: date
+        technicianId:
+          type: string
+          format: uuid
+          description: Opcional en el modal rapido (RF-006), esperado en el formulario completo (RF-007/RF-008)
+        partIds:
+          type: array
+          description: Repuestos seleccionados para calcular presupuesto (RF-010)
+          items:
+            type: string
+            format: uuid
+
+    WorkOrderSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        vehiclePlaca:
+          type: string
+        stageName:
+          type: string
+        technicianName:
+          type: string
+        prioridad:
+          $ref: "#/components/schemas/Prioridad"
+        atrasada:
+          type: boolean
+
+    WorkOrder:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        vehicleId:
+          type: string
+          format: uuid
+        technicianId:
+          type: string
+          format: uuid
+        stageId:
+          type: string
+          format: uuid
+        prioridad:
+          $ref: "#/components/schemas/Prioridad"
+        descripcion:
+          type: string
+        fechaProgramada:
+          type: string
+          format: date
+        presupuesto:
+          type: number
+          format: double
+        cotizacionAprobadaCliente:
+          type: boolean
+        cotizacionAprobadaSupervisor:
+          type: boolean
+          nullable: true
+          description: Null si la cotizacion no supera el umbral de alto valor (RF-039)
+        listaParaRevision:
+          type: boolean
+        checklist:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChecklistItem"
+        photos:
+          type: array
+          items:
+            $ref: "#/components/schemas/Photo"
+
+    ChecklistItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        descripcion:
+          type: string
+        completado:
+          type: boolean
+        orden:
+          type: integer
+
+    Photo:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        url:
+          type: string
+        timestamp:
+          type: string
+          format: date-time

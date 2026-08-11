@@ -1,0 +1,56 @@
+@startuml arquitectura-capas
+!pragma layout smetana
+skinparam classAttributeIconSize 0
+top to bottom direction
+
+title FloatOps - Arquitectura por capas - porcion representativa WorkOrder
+
+package "Resource REST Quarkus" {
+  class WorkOrderResource <<resource>> {
+    + crearOrden()
+    + listarOrdenes()
+    + obtenerDetalle(id)
+    + cambiarEtapa(id, etapa)
+    + reasignarTecnico(id, tecnico)
+    + aprobarCotizacion(id)
+  }
+}
+
+package "Service" {
+  class WorkOrderService <<service>> {
+    + crear()
+    + cambiarEtapa()
+    + reasignarTecnico()
+    + calcularPresupuesto()
+    + aprobarCotizacion()
+  }
+  class NotificationService <<service>> {
+    + enviar()
+  }
+  class AuditService <<service>> {
+    + registrar()
+  }
+}
+
+package "Repository Panache" {
+  class PanacheRepositoryBase <<panache>> {
+  }
+  class WorkOrderRepository <<repository>> {
+    + findByStage(stage)
+    + findByTechnician(tecnico)
+  }
+}
+
+package "Domain Entity" {
+  class WorkOrder <<entity>> {
+  }
+}
+
+WorkOrderResource ..> WorkOrderService : usa
+WorkOrderService ..> WorkOrderRepository : usa
+WorkOrderService ..> NotificationService : dispara RF-026
+WorkOrderService ..> AuditService : dispara RF-027
+WorkOrderRepository -- PanacheRepositoryBase : implementa
+WorkOrderRepository ..> WorkOrder : persiste
+
+@enduml

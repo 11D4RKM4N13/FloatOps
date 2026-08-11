@@ -1,0 +1,41 @@
+@startuml arquitectura-alto-nivel
+!pragma layout smetana
+left to right direction
+
+title FloatOps - Arquitectura de alto nivel
+
+actor Despachador
+actor Administrador
+actor Tecnico
+
+package "Clientes (Kotlin Multiplatform)" {
+  component WebDashboard
+  component MobileApp
+}
+
+package "Backend" {
+  component QuarkusAPI
+}
+
+package "Datos" {
+  database PostgreSQL
+}
+
+package "Servicios externos" {
+  component Keycloak
+  component WhatsAppAPI
+  component EmailProvider
+}
+
+Despachador --> WebDashboard
+Administrador --> WebDashboard
+Tecnico --> MobileApp
+
+WebDashboard ..> QuarkusAPI : REST HTTPS
+MobileApp ..> QuarkusAPI : REST HTTPS
+QuarkusAPI ..> PostgreSQL : JDBC
+QuarkusAPI ..> Keycloak : OIDC
+QuarkusAPI ..> WhatsAppAPI : notificaciones RF-026
+QuarkusAPI ..> EmailProvider : notificaciones RF-026
+
+@enduml

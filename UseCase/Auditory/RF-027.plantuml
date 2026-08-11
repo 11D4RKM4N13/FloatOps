@@ -1,0 +1,33 @@
+@startuml RF-027
+!pragma layout smetana
+skinparam actorStyle awesome
+left to right direction
+
+title Caso de uso: RF-027 - Registrar auditoria de cambios
+
+skinparam usecase {
+  BackgroundColor<<Alta>> LightSkyBlue
+  BorderColor<<Alta>> SteelBlue
+  BackgroundColor<<Media>> Khaki
+  BorderColor<<Media>> DarkKhaki
+  BackgroundColor<<Baja>> Gainsboro
+  BorderColor<<Baja>> Gray
+  ArrowColor SteelBlue
+}
+
+actor Sistema
+
+package "Auditoria" {
+  usecase UC1 as "Registrar auditoria\nde cambios\n--\nRegistra automaticamente quien,\ncuando y que cambio en una orden,\nun presupuesto o un vehiculo." <<Alta>>
+}
+
+Sistema --> UC1
+
+note right of UC1
+  **RF-027** - Prioridad: Alta
+  --
+  Criterios de aceptacion:
+  * Cada registro incluye entidad, campo, valor anterior, valor nuevo, usuario y timestamp
+end note
+
+@enduml

@@ -1,0 +1,36 @@
+@startuml RF-004
+!pragma layout smetana
+skinparam actorStyle awesome
+left to right direction
+
+title Caso de uso: RF-004 - Tablero kanban de ordenes
+
+skinparam usecase {
+  BackgroundColor<<Alta>> LightSkyBlue
+  BorderColor<<Alta>> SteelBlue
+  BackgroundColor<<Media>> Khaki
+  BorderColor<<Media>> DarkKhaki
+  BackgroundColor<<Baja>> Gainsboro
+  BorderColor<<Baja>> Gray
+  ArrowColor SteelBlue
+}
+
+actor Despachador
+actor Administrador
+
+package "Ordenes de trabajo" {
+  usecase UC1 as "Tablero kanban de ordenes\n--\nMuestra las ordenes de\ntrabajo agrupadas por etapa.\nLas etapas son configurables." <<Alta>>
+}
+
+Despachador --> UC1
+Administrador --> UC1
+
+note right of UC1
+  **RF-004** - Prioridad: Alta
+  --
+  Criterios de aceptacion:
+  * Cada columna muestra el conteo de ordenes
+  * Refleja las etapas definidas en la configuracion vigente
+end note
+
+@enduml

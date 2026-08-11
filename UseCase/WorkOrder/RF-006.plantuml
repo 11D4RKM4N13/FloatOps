@@ -1,0 +1,35 @@
+@startuml RF-006
+!pragma layout smetana
+skinparam actorStyle awesome
+left to right direction
+
+title Caso de uso: RF-006 - Crear orden de trabajo (modal rapido)
+
+skinparam usecase {
+  BackgroundColor<<Alta>> LightSkyBlue
+  BorderColor<<Alta>> SteelBlue
+  BackgroundColor<<Media>> Khaki
+  BorderColor<<Media>> DarkKhaki
+  BackgroundColor<<Baja>> Gainsboro
+  BorderColor<<Baja>> Gray
+  ArrowColor SteelBlue
+}
+
+actor Despachador
+actor Administrador
+
+package "Ordenes de trabajo" {
+  usecase UC1 as "Crear orden de trabajo\n(modal rapido)\n--\nModal con vehiculo, tipo de\nservicio, descripcion, prioridad\ny fecha programada." <<Alta>>
+}
+
+Despachador --> UC1
+Administrador --> UC1
+
+note right of UC1
+  **RF-006** - Prioridad: Alta
+  --
+  Criterios de aceptacion:
+  * Todos los campos obligatorios se validan antes de guardar
+end note
+
+@enduml

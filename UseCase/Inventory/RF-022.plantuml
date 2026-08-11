@@ -1,0 +1,33 @@
+@startuml RF-022
+!pragma layout smetana
+skinparam actorStyle awesome
+left to right direction
+
+title Caso de uso: RF-022 - Gestionar catalogo de repuestos
+
+skinparam usecase {
+  BackgroundColor<<Alta>> LightSkyBlue
+  BorderColor<<Alta>> SteelBlue
+  BackgroundColor<<Media>> Khaki
+  BorderColor<<Media>> DarkKhaki
+  BackgroundColor<<Baja>> Gainsboro
+  BorderColor<<Baja>> Gray
+  ArrowColor SteelBlue
+}
+
+actor Administrador
+
+package "Repuestos" {
+  usecase UC1 as "Gestionar catalogo\nde repuestos\n--\nDa de alta repuestos y\ngestiona su stock." <<Alta>>
+}
+
+Administrador --> UC1
+
+note right of UC1
+  **RF-022** - Prioridad: Alta
+  --
+  Criterios de aceptacion:
+  * Incluye codigo, nombre, precio y cantidad en stock
+end note
+
+@enduml

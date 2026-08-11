@@ -1,0 +1,25 @@
+@startuml secuencia-login
+title FloatOps - Secuencia - Inicio de sesion (RF-001/RF-036)
+
+actor Usuario
+participant ClienteApp
+participant Keycloak
+participant QuarkusAPI
+
+Usuario -> ClienteApp : ingresa credenciales
+ClienteApp -> Keycloak : POST /token (OIDC)
+Keycloak -> Keycloak : valida credenciales
+
+alt contrasena vencida mas de 30 dias (RF-036)
+  Keycloak --> ClienteApp : requiere actualizacion de contrasena
+  ClienteApp --> Usuario : redirige a pantalla de\nactualizacion de contrasena
+else contrasena vigente
+  Keycloak --> ClienteApp : access_token + rol
+  ClienteApp -> QuarkusAPI : request con token
+  QuarkusAPI -> Keycloak : valida token
+  Keycloak --> QuarkusAPI : token valido, rol confirmado
+  QuarkusAPI --> ClienteApp : respuesta segun rol (RF-001)
+  ClienteApp --> Usuario : acceso concedido, vista segun rol
+end
+
+@enduml

@@ -1,0 +1,80 @@
+@startuml modelo-clases-transversal
+!pragma layout smetana
+skinparam classAttributeIconSize 0
+left to right direction
+
+title FloatOps - Modelo de clases UML - Transversales
+
+enum EstadoUsuario {
+  ACTIVO
+  INHABILITADO
+}
+
+enum CanalNotificacion {
+  IN_APP
+  EMAIL
+  WHATSAPP
+}
+
+class Role {
+  id : Long
+  nombre : String
+}
+
+class User {
+  id : Long
+  nombre : String
+  credenciales : String
+  ultimaActualizacionPassword : LocalDate
+  estado : EstadoUsuario
+  --
+  + iniciarSesion()
+  + cerrarSesion()
+  + actualizarPassword(nueva)
+  + inhabilitar()
+}
+
+class Notification {
+  id : Long
+  tipoEvento : String
+  mensaje : String
+  canal : CanalNotificacion
+  leida : Boolean
+  timestamp : LocalDateTime
+  --
+  + enviar()
+  + marcarLeida()
+}
+
+class AuditLog {
+  id : Long
+  entidadAfectada : String
+  campo : String
+  valorAnterior : String
+  valorNuevo : String
+  timestamp : LocalDateTime
+  --
+  + registrar()
+}
+
+Role "1" -- "0..N" User : agrupa
+User "1" *-- "0..N" Notification : recibe
+User "1" -- "0..N" AuditLog : realiza
+
+User ..> EstadoUsuario
+Notification ..> CanalNotificacion
+
+note right of AuditLog
+  Referencia polimorfica a la
+  entidad auditada (WorkOrder,
+  presupuesto, Vehicle). No
+  modelada como asociacion
+  directa por simplicidad.
+  --
+  Asociacion simple (no composicion)
+  con User: el log no debe borrarse
+  en cascada si se elimina el usuario,
+  por trazabilidad.
+end note
+
+@enduml

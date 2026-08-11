@@ -1,0 +1,35 @@
+@startuml RF-031
+!pragma layout smetana
+skinparam actorStyle awesome
+left to right direction
+
+title Caso de uso: RF-031 - Actualizar etapa desde el detalle
+
+skinparam usecase {
+  BackgroundColor<<Alta>> LightSkyBlue
+  BorderColor<<Alta>> SteelBlue
+  BackgroundColor<<Media>> Khaki
+  BorderColor<<Media>> DarkKhaki
+  BackgroundColor<<Baja>> Gainsboro
+  BorderColor<<Baja>> Gray
+  ArrowColor SteelBlue
+}
+
+actor Despachador
+actor Administrador
+
+package "Ordenes de trabajo" {
+  usecase UC1 as "Actualizar etapa\ndesde el detalle\n--\nCambia la etapa de una orden\nmediante un boton/selector en\nel detalle, alternativo al kanban." <<Alta>>
+}
+
+Despachador --> UC1
+Administrador --> UC1
+
+note right of UC1
+  **RF-031** - Prioridad: Alta
+  --
+  Criterios de aceptacion:
+  * Dispara la misma notificacion (RF-026) y auditoria (RF-027) que el kanban
+end note
+
+@enduml

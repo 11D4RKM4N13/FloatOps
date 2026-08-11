@@ -1,0 +1,34 @@
+@startuml RF-035
+!pragma layout smetana
+skinparam actorStyle awesome
+left to right direction
+
+title Caso de uso: RF-035 - Configurar etapas del tablero kanban
+
+skinparam usecase {
+  BackgroundColor<<Alta>> LightSkyBlue
+  BorderColor<<Alta>> SteelBlue
+  BackgroundColor<<Media>> Khaki
+  BorderColor<<Media>> DarkKhaki
+  BackgroundColor<<Baja>> Gainsboro
+  BorderColor<<Baja>> Gray
+  ArrowColor SteelBlue
+}
+
+actor Administrador
+
+package "Administracion" {
+  usecase UC1 as "Configurar etapas\ndel tablero kanban\n--\nCrea, edita, reordena y\ndesactiva las etapas del\ntablero kanban." <<Alta>>
+}
+
+Administrador --> UC1
+
+note right of UC1
+  **RF-035** - Prioridad: Alta
+  --
+  Criterios de aceptacion:
+  * Las etapas no son fijas en codigo, viven como catalogo configurable
+  * Los valores actuales son la configuracion inicial por defecto, no un limite
+end note
+
+@enduml

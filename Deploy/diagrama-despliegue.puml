@@ -1,0 +1,65 @@
+@startuml diagrama-despliegue
+!pragma layout smetana
+title FloatOps - Diagrama de Despliegue
+
+skinparam componentStyle rectangle
+skinparam node {
+  BackgroundColor White
+  BorderColor Black
+}
+
+node "Dispositivo Android\n(Tecnico)" as android {
+  component "App Android\n(Compose Multiplatform)" as appAndroid
+}
+
+node "Navegador Web\n(Despachador / Administrador)" as browser {
+  component "App Web\n(Compose Multiplatform - Wasm/JS)" as appWeb
+}
+
+cloud "Internet" as internet
+
+node "Servidor Cloud (VPS)" as cloudServer {
+  node "Backend" as backendNode {
+    component "API REST\n(Quarkus)" as api
+  }
+
+  node "Autenticacion" as authNode {
+    component "Keycloak\n(OIDC)" as keycloak
+  }
+
+  database "PostgreSQL" as db
+}
+
+cloud "Servicios Externos" as external {
+  component "WhatsApp\nBusiness API" as whatsapp
+  component "Proveedor\nde Email\n(SMTP)" as email
+  component "Facturacion\nElectronica DIAN\n(Alegra / Siigo / Factus)" as dian
+}
+
+appAndroid --> internet : HTTPS/REST\n(JWT)
+appWeb --> internet : HTTPS/REST\n(JWT)
+internet --> api
+
+appAndroid ..> keycloak : login OIDC
+appWeb ..> keycloak : login OIDC
+
+api --> db : JDBC
+api --> keycloak : valida token
+api --> whatsapp : notificaciones
+api --> email : notificaciones
+api --> dian : emision de\nfacturas
+
+note bottom of api
+  Unico componente con
+  acceso directo a la BD
+  y con las reglas de negocio
+end note
+
+note right of android
+  Distribucion: Firebase App
+  Distribution o Play Internal
+  Testing (MVP, sin Play Store
+  publico)
+end note
+
+@enduml
