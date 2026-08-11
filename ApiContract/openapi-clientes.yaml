@@ -1,0 +1,198 @@
+openapi: 3.0.3
+info:
+  title: FloatOps API - Clientes
+  description: >
+    Contrato de la API REST para el recurso Client. Cubre RF-028 a
+    RF-030.
+  version: "0.1.0"
+
+servers:
+  - url: https://api.floatops.com/v1
+    description: Produccion (conceptual, no confirmado)
+  - url: http://localhost:8080/v1
+    description: Desarrollo local (Quarkus dev mode)
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: clients
+    description: Empresas y personas naturales atendidas por el taller
+
+paths:
+  /clients:
+    get:
+      operationId: listClients
+      summary: Consultar listado de clientes
+      tags: [clients]
+      parameters:
+        - name: tipo
+          in: query
+          schema:
+            $ref: "#/components/schemas/TipoCliente"
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Listado paginado de clientes
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Client"
+                  total:
+                    type: integer
+
+    post:
+      operationId: createClient
+      summary: Registrar cliente
+      description: >
+        Cubre RF-030. Un cliente de paso (no recurrente) usa los
+        mismos campos obligatorios que cualquier cliente - no hay
+        flujo simplificado.
+      tags: [clients]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ClientCreate"
+      responses:
+        "201":
+          description: Cliente creado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Client"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+
+  /clients/{clientId}:
+    parameters:
+      - $ref: "#/components/parameters/ClientId"
+    get:
+      operationId: getClient
+      summary: Consultar detalle de cliente
+      tags: [clients]
+      responses:
+        "200":
+          description: Detalle del cliente
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Client"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      operationId: updateClient
+      summary: Editar cliente
+      description: Cubre RF-030.
+      tags: [clients]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ClientCreate"
+      responses:
+        "200":
+          description: Cliente actualizado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Client"
+
+  /clients/{clientId}/vehicles:
+    parameters:
+      - $ref: "#/components/parameters/ClientId"
+    get:
+      operationId: listClientVehicles
+      summary: Consultar vehiculos asociados al cliente
+      description: Cubre RF-028 (lado inverso de la asociacion).
+      tags: [clients]
+      responses:
+        "200":
+          description: Vehiculos del cliente
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    placa:
+                      type: string
+
+components:
+  parameters:
+    ClientId:
+      name: clientId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  responses:
+    NotFound:
+      description: Recurso no encontrado
+    ValidationError:
+      description: Error de validacion de campos obligatorios
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    TipoCliente:
+      type: string
+      enum: [EMPRESA, PERSONA_NATURAL]
+
+    ClientCreate:
+      type: object
+      required: [nombre, tipo, telefono, correo, direccion]
+      properties:
+        nombre:
+          type: string
+        tipo:
+          $ref: "#/components/schemas/TipoCliente"
+        telefono:
+          type: string
+        correo:
+          type: string
+        direccion:
+          type: string
+
+    Client:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        nombre:
+          type: string
+        tipo:
+          $ref: "#/components/schemas/TipoCliente"
+        telefono:
+          type: string
+        correo:
+          type: string
+        direccion:
+          type: string

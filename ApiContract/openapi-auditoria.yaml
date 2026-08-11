@@ -1,0 +1,121 @@
+openapi: 3.0.3
+info:
+  title: FloatOps API - Auditoria
+  description: >
+    Contrato de la API REST para Auditoria. Cubre RF-027, solo el
+    lado de consulta (confirmado que Administrador si tiene pantalla
+    dedicada). El registro es automatico, disparado internamente por
+    otros endpoints (ej. cambio de etapa, aprobacion de cotizacion) -
+    no existe un POST publico para crear entradas de auditoria.
+  version: "0.1.0"
+
+servers:
+  - url: https://api.floatops.com/v1
+    description: Produccion (conceptual, no confirmado)
+  - url: http://localhost:8080/v1
+    description: Desarrollo local (Quarkus dev mode)
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: audit
+    description: Consulta de trazabilidad de cambios. Solo rol Administrador.
+
+paths:
+  /audit-logs:
+    get:
+      operationId: listAuditLogs
+      summary: Consultar historial de auditoria
+      description: Requiere rol Administrador.
+      tags: [audit]
+      parameters:
+        - name: entidadAfectada
+          in: query
+          description: ej. WorkOrder, Vehicle
+          schema:
+            type: string
+        - name: entidadId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: userId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Listado paginado de registros de auditoria
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/AuditLog"
+                  total:
+                    type: integer
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+components:
+  responses:
+    Forbidden:
+      description: >
+        El rol del usuario autenticado no tiene permiso para esta
+        accion (ver matriz de permisos, requerimientos seccion 2.1).
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    AuditLog:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        entidadAfectada:
+          type: string
+        entidadId:
+          type: string
+          format: uuid
+        campo:
+          type: string
+        valorAnterior:
+          type: string
+        valorNuevo:
+          type: string
+        userId:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time

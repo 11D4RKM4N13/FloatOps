@@ -25,7 +25,9 @@ class Client {
   id : Long
   nombre : String
   tipo : TipoCliente
-  contacto : String
+  telefono : String
+  correo : String
+  direccion : String
   --
   + registrar()
   + editar()

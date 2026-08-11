@@ -1,0 +1,76 @@
+openapi: 3.0.3
+info:
+  title: FloatOps API - Panel
+  description: >
+    Contrato de la API REST para el Panel (Dashboard). Cubre RF-002.
+    RF-003 (navegar a detalle) es navegacion de frontend usando los
+    IDs que ya vienen en estas respuestas, no requiere endpoint propio.
+  version: "0.1.0"
+
+servers:
+  - url: https://api.floatops.com/v1
+    description: Produccion (conceptual, no confirmado)
+  - url: http://localhost:8080/v1
+    description: Desarrollo local (Quarkus dev mode)
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: dashboard
+    description: Indicadores y resumen del panel principal
+
+paths:
+  /dashboard/kpis:
+    get:
+      operationId: getDashboardKpis
+      summary: Consultar KPIs del panel
+      description: Cubre RF-002.
+      tags: [dashboard]
+      responses:
+        "200":
+          description: Indicadores clave
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  vehiculosPendientes:
+                    type: integer
+                  ordenesAbiertas:
+                    type: integer
+                  totalFlota:
+                    type: integer
+
+  /dashboard/vehicles-requiring-service:
+    get:
+      operationId: listVehiclesRequiringService
+      summary: Consultar vehiculos que requieren servicio
+      description: Cubre la tabla embebida en RF-002.
+      tags: [dashboard]
+      responses:
+        "200":
+          description: Vehiculos con servicio pendiente o atrasado
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    vehicleId:
+                      type: string
+                      format: uuid
+                    placa:
+                      type: string
+                    estadoMantenimiento:
+                      type: string
+                    servicioRequerido:
+                      type: string
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

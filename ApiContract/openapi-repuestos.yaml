@@ -1,0 +1,156 @@
+openapi: 3.0.3
+info:
+  title: FloatOps API - Repuestos
+  description: >
+    Contrato de la API REST para el recurso Part. Cubre RF-022. El
+    catalogo tambien se consulta desde Ordenes de trabajo al crear
+    una orden (ver openapi-ordenes-trabajo.yaml, WorkOrderCreate.partIds).
+  version: "0.1.0"
+
+servers:
+  - url: https://api.floatops.com/v1
+    description: Produccion (conceptual, no confirmado)
+  - url: http://localhost:8080/v1
+    description: Desarrollo local (Quarkus dev mode)
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: parts
+    description: Catalogo e inventario de repuestos
+
+paths:
+  /parts:
+    get:
+      operationId: listParts
+      summary: Consultar catalogo de repuestos
+      description: >
+        Usado tanto por la pantalla de gestion de inventario
+        (Administrador, RF-022) como por el catalogo embebido en el
+        formulario de orden (RF-007).
+      tags: [parts]
+      parameters:
+        - name: categoryId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: search
+          in: query
+          description: Busqueda por nombre o codigo
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Listado de repuestos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Part"
+
+    post:
+      operationId: createPart
+      summary: Dar de alta un repuesto
+      description: Cubre RF-022. Requiere rol Administrador.
+      tags: [parts]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PartCreate"
+      responses:
+        "201":
+          description: Repuesto creado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Part"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /parts/{partId}/stock:
+    parameters:
+      - name: partId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    patch:
+      operationId: updatePartStock
+      summary: Actualizar stock de un repuesto
+      description: Cubre RF-022. Requiere rol Administrador.
+      tags: [parts]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [stock]
+              properties:
+                stock:
+                  type: integer
+      responses:
+        "200":
+          description: Stock actualizado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Part"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+components:
+  responses:
+    Forbidden:
+      description: >
+        El rol del usuario autenticado no tiene permiso para esta
+        accion (ver matriz de permisos, requerimientos seccion 2.1).
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    PartCreate:
+      type: object
+      required: [codigo, nombre, precio, stock]
+      properties:
+        codigo:
+          type: string
+        nombre:
+          type: string
+        precio:
+          type: number
+          format: double
+        stock:
+          type: integer
+        categoryId:
+          type: string
+          format: uuid
+
+    Part:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        codigo:
+          type: string
+        nombre:
+          type: string
+        precio:
+          type: number
+          format: double
+        stock:
+          type: integer
+        categoryId:
+          type: string
+          format: uuid

@@ -49,6 +49,18 @@
       "standardFlowEnabled": true,
       "redirectUris": ["http://localhost:3000/*"],
       "webOrigins": ["http://localhost:3000"]
+    },
+    {
+      "clientId": "floatops-mobile",
+      "name": "FloatOps Tecnico (Compose Android/iOS)",
+      "enabled": true,
+      "publicClient": true,
+      "protocol": "openid-connect",
+      "standardFlowEnabled": true,
+      "redirectUris": ["floatops://callback"],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      }
     }
   ]
 }

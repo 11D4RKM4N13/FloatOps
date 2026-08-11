@@ -1,0 +1,140 @@
+openapi: 3.0.3
+info:
+  title: FloatOps API - Informes
+  description: >
+    Contrato de la API REST para Informes. Cubre RF-023, acotado al
+    alcance de MVP confirmado (2 informes). El resto de candidatos
+    (gasto en repuestos, incidencias, cumplimiento de mantenimiento)
+    queda para una siguiente iteracion, sin endpoint todavia.
+  version: "0.1.0"
+
+servers:
+  - url: https://api.floatops.com/v1
+    description: Produccion (conceptual, no confirmado)
+  - url: http://localhost:8080/v1
+    description: Desarrollo local (Quarkus dev mode)
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: reports
+    description: Informes generados a partir de los datos del sistema
+
+paths:
+  /reports/work-orders-by-technician:
+    get:
+      operationId: getWorkOrdersByTechnicianReport
+      summary: Ordenes por tecnico o por periodo
+      description: >
+        Cubre RF-023 (informe 1 de 2 del MVP). Filtros y formato de
+        exportacion exactos aun por definir.
+      tags: [reports]
+      parameters:
+        - name: technicianId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: format
+          in: query
+          description: "Formato de exportacion. Si se omite, devuelve JSON."
+          schema:
+            type: string
+            enum: [csv, pdf]
+      responses:
+        "200":
+          description: >
+            Conteo de ordenes agrupado por tecnico. Content-Type varia
+            segun el parametro format (application/json, text/csv,
+            application/pdf).
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    technicianId:
+                      type: string
+                      format: uuid
+                    technicianName:
+                      type: string
+                    totalOrdenes:
+                      type: integer
+            text/csv:
+              schema:
+                type: string
+                format: binary
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+
+  /reports/average-resolution-time:
+    get:
+      operationId: getAverageResolutionTimeReport
+      summary: Tiempo promedio de resolucion por tipo de servicio
+      description: >
+        Cubre RF-023 (informe 2 de 2 del MVP). Filtros y formato de
+        exportacion exactos aun por definir.
+      tags: [reports]
+      parameters:
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: format
+          in: query
+          description: "Formato de exportacion. Si se omite, devuelve JSON."
+          schema:
+            type: string
+            enum: [csv, pdf]
+      responses:
+        "200":
+          description: >
+            Tiempo promedio agrupado por tipo de servicio. Content-Type
+            varia segun el parametro format.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    tipoServicio:
+                      type: string
+                    tiempoPromedioHoras:
+                      type: number
+                      format: double
+            text/csv:
+              schema:
+                type: string
+                format: binary
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

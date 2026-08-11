@@ -1,0 +1,375 @@
+openapi: 3.0.3
+info:
+  title: FloatOps API - Administracion
+  description: >
+    Contrato de la API REST para Administracion. Cubre RF-024, RF-025
+    y RF-035. Todos los endpoints requieren rol Administrador (ver
+    matriz de permisos, requerimientos seccion 2.1).
+  version: "0.1.0"
+
+servers:
+  - url: https://api.floatops.com/v1
+    description: Produccion (conceptual, no confirmado)
+  - url: http://localhost:8080/v1
+    description: Desarrollo local (Quarkus dev mode)
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: users
+    description: Gestion de usuarios (RF-024)
+  - name: catalogs
+    description: Catalogos base (RF-025)
+  - name: stages
+    description: Configuracion de etapas del kanban (RF-035)
+
+paths:
+  /users:
+    get:
+      operationId: listUsers
+      summary: Consultar listado de usuarios
+      tags: [users]
+      responses:
+        "200":
+          description: Listado de usuarios
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+    post:
+      operationId: createUser
+      summary: Crear usuario
+      tags: [users]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserCreate"
+      responses:
+        "201":
+          description: Usuario creado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /users/{userId}:
+    parameters:
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    put:
+      operationId: updateUser
+      summary: Editar usuario y asignar rol
+      tags: [users]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserCreate"
+      responses:
+        "200":
+          description: Usuario actualizado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /users/{userId}/deactivate:
+    parameters:
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      operationId: deactivateUser
+      summary: Desactivar usuario
+      tags: [users]
+      responses:
+        "200":
+          description: Usuario desactivado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /service-types:
+    get:
+      operationId: listServiceTypes
+      summary: Consultar catalogo de tipos de servicio
+      tags: [catalogs]
+      responses:
+        "200":
+          description: Tipos de servicio
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CatalogItem"
+    post:
+      operationId: createServiceType
+      summary: Agregar tipo de servicio
+      tags: [catalogs]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CatalogItemCreate"
+      responses:
+        "201":
+          description: Tipo de servicio creado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CatalogItem"
+
+  /part-categories:
+    get:
+      operationId: listPartCategories
+      summary: Consultar catalogo de categorias de repuestos
+      tags: [catalogs]
+      responses:
+        "200":
+          description: Categorias de repuestos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CatalogItem"
+    post:
+      operationId: createPartCategory
+      summary: Agregar categoria de repuestos
+      tags: [catalogs]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CatalogItemCreate"
+      responses:
+        "201":
+          description: Categoria creada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CatalogItem"
+
+  /stages:
+    get:
+      operationId: listStages
+      summary: Consultar etapas del kanban
+      description: >
+        Cubre RF-035. La configuracion inicial por defecto es Requiere
+        atencion, Programado, En taller, Completados - no es un
+        limite fijo.
+      tags: [stages]
+      responses:
+        "200":
+          description: Etapas configuradas, en orden
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Stage"
+    post:
+      operationId: createStage
+      summary: Crear etapa
+      tags: [stages]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StageCreate"
+      responses:
+        "201":
+          description: Etapa creada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Stage"
+
+  /stages/{stageId}/reorder:
+    parameters:
+      - name: stageId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    patch:
+      operationId: reorderStage
+      summary: Reordenar etapa
+      tags: [stages]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [orden]
+              properties:
+                orden:
+                  type: integer
+      responses:
+        "200":
+          description: Etapa reordenada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Stage"
+
+  /stages/{stageId}/deactivate:
+    parameters:
+      - name: stageId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      operationId: deactivateStage
+      summary: Desactivar etapa
+      tags: [stages]
+      responses:
+        "200":
+          description: Etapa desactivada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Stage"
+
+  /settings/quote-approval-threshold:
+    get:
+      operationId: getQuoteApprovalThreshold
+      summary: Consultar umbral de cotizacion de alto valor
+      description: Cubre RF-040.
+      tags: [catalogs]
+      responses:
+        "200":
+          description: Umbral configurado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  monto:
+                    type: number
+                    format: double
+    put:
+      operationId: updateQuoteApprovalThreshold
+      summary: Actualizar umbral de cotizacion de alto valor
+      description: >
+        Cubre RF-040. El cambio no afecta retroactivamente ordenes
+        cuya cotizacion ya fue evaluada contra el umbral anterior.
+      tags: [catalogs]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [monto]
+              properties:
+                monto:
+                  type: number
+                  format: double
+      responses:
+        "200":
+          description: Umbral actualizado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  monto:
+                    type: number
+                    format: double
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    UserCreate:
+      type: object
+      required: [nombre, email, rol]
+      properties:
+        nombre:
+          type: string
+        email:
+          type: string
+        rol:
+          type: string
+          enum: [administrador, despachador, tecnico, supervisor-gerente, contador-facturacion]
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        nombre:
+          type: string
+        email:
+          type: string
+        rol:
+          type: string
+        estado:
+          type: string
+          enum: [ACTIVO, INHABILITADO]
+
+    CatalogItemCreate:
+      type: object
+      required: [nombre]
+      properties:
+        nombre:
+          type: string
+
+    CatalogItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        nombre:
+          type: string
+
+    StageCreate:
+      type: object
+      required: [nombre, orden]
+      properties:
+        nombre:
+          type: string
+        orden:
+          type: integer
+
+    Stage:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        nombre:
+          type: string
+        orden:
+          type: integer
+        activo:
+          type: boolean
