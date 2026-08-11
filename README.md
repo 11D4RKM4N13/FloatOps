@@ -15,7 +15,7 @@ Sistema de gestión de flota y órdenes de servicio (fleet service management).
 ## 1. Stack tecnológico
 
 **Backend**
-- **Java / Kotlin + Quarkus** — framework principal de la API
+- **Java + Quarkus** — framework principal de la API
 - **Hibernate ORM with Panache** + **PostgreSQL** — persistencia
 - **Quarkus OIDC + Keycloak** — autenticación y autorización (roles pendientes de definir, ver sección 6)
 - **Mutiny** — programación reactiva para actualizaciones en tiempo real (kanban, notificaciones futuras)

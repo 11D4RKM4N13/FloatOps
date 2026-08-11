@@ -1,6 +1,6 @@
 # Definición de Requerimientos — FloatOps
 
-> Versión: 0.18
+> Versión: 0.19
 > Fecha: 07/08/2026
 > Autor: Edwin Suares
 > Estado: Borrador
@@ -176,7 +176,7 @@ Agrupados por módulo, en el mismo orden usado en `README.md`. Los IDs (`RF-XXX`
 | RNF-004 | Disponibilidad | El sistema debe estar disponible para consulta durante el horario operativo del taller. | ✅ Uptime ≥ 99% mensual (~7.3 horas de inactividad permitida al mes) |
 | RNF-005 | Escalabilidad | El backend (Quarkus) debe soportar el crecimiento de la flota y del número de órdenes sin rediseño mayor. | ✅ Soporta 100 usuarios concurrentes sin degradación |
 | RNF-006 | Usabilidad | La vista móvil del técnico debe ser operable en taller sin capacitación previa. | ✅ Tasa de éxito de tarea ≥ 90% en prueba de usabilidad con el perfil de usuario objetivo (despachador/técnico) |
-| RNF-007 | Mantenibilidad | El código (Kotlin, Quarkus, Compose Multiplatform) debe seguir estándares que faciliten el mantenimiento por un equipo pequeño. | Cobertura de pruebas ≥ 80% (unitarias e integración, ya definido en restricciones), linting sin errores |
+| RNF-007 | Mantenibilidad | El código (Java/Quarkus en el backend, Kotlin/Compose Multiplatform en el frontend) debe seguir estándares que faciliten el mantenimiento por un equipo pequeño. | Cobertura de pruebas ≥ 80% (unitarias e integración, ya definido en restricciones), linting sin errores |
 | RNF-008 | Compatibilidad | El sistema debe funcionar en Web (dashboard) y en Android/iOS (vista móvil de técnicos) a partir de un mismo código compartido. | Kotlin Multiplatform + Compose Multiplatform (targets Web Wasm/JS y Android/iOS) |
 | RNF-009 | Persistencia | Los datos deben almacenarse en un motor relacional que soporte las relaciones del modelo de datos definido. | PostgreSQL |
 | RNF-010 | Seguridad | Las contraseñas deben rotarse obligatoriamente cada 30 días; vencido ese plazo, la cuenta queda inhabilitada hasta la actualización. | Configuración de política de contraseñas en Keycloak (max password age = 30 días) |
@@ -188,7 +188,7 @@ Agrupados por módulo, en el mismo orden usado en `README.md`. Los IDs (`RF-XXX`
 ## 5. Restricciones y supuestos
 
 **Restricciones:**
-- El backend debe construirse en Java/Kotlin sobre **Quarkus**, con persistencia en **PostgreSQL**.
+- El backend debe construirse en **Java** sobre **Quarkus**, con persistencia en **PostgreSQL**.
 - El frontend debe construirse en **Kotlin Multiplatform + Compose Multiplatform**, compartiendo lógica entre el dashboard web y la app móvil de técnicos.
 - La autenticación debe delegarse a **Keycloak** (OIDC).
 - El desarrollo es realizado por un único desarrollador, sin equipo — esto condiciona el ritmo de entrega y obliga a priorizar el MVP de forma estricta.
@@ -249,3 +249,4 @@ Agrupados por módulo, en el mismo orden usado en `README.md`. Los IDs (`RF-XXX`
 | 0.16 | 07/08/2026 | Edwin Suares | Se agrega RF-040 (configurar umbral de cotización de alto valor — confirmado que es configurable, no un valor fijo). Se confirma que WhatsApp se implementa en una siguiente iteración, no en el MVP inicial. Se confirman formatos de exportación de informes (CSV y PDF). Se definen métricas propuestas para RNF-001, RNF-004, RNF-005, RNF-006 (marcadas 🔶, pendientes de validación del equipo). Se consolida RNF-007 con el 80% de cobertura ya definido en restricciones. Se agrega el client `floatops-mobile` al realm de Keycloak. |
 | 0.17 | 07/08/2026 | Edwin Suares | Se confirman los RNF-001, 004, 005, 006 (ya no son propuesta, son decisión). Se decide mantener los 11 contratos OpenAPI independientes, sin consolidar. Se decide estructura de repositorio: monorepo. |
 | 0.18 | 07/08/2026 | Edwin Suares | Se revisan los 13 mockups nuevos generados por Claude Design. Se confirma separar el campo `contacto` de `Client` en tres: `telefono`, `correo`, `direccion` (según el mockup de alta de cliente). Se detectan y se marcan para corrección en el diseño errores de localización (CLP en vez de COP, +56 en vez de +57, dominio .cl en vez de .com/.com.co) — Colombia, no Chile. |
+| 0.19 | 07/08/2026 | Edwin Suares | Se corrige una desalineación real: el `code-with-quarkus` generado usa Java, no Kotlin como decía el README desde el inicio. Se confirma Java para el backend (el frontend sigue Kotlin Multiplatform). Se convierten las 10 entidades JPA/Panache de Kotlin a Java. Se corrige RNF-007 y la restricción de stack para reflejar Java en backend / Kotlin en frontend, no Java/Kotlin ambiguo. |
