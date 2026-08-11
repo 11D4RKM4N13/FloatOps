@@ -1,0 +1,153 @@
+openapi: 3.0.3
+info:
+  title: FloatOps API - Tecnicos
+  description: >
+    Contrato de la API REST para el recurso Technician. Cubre RF-020
+    y RF-021.
+  version: "0.1.0"
+
+servers:
+  - url: https://api.floatops.com/v1
+    description: Produccion (conceptual, no confirmado)
+  - url: http://localhost:8080/v1
+    description: Desarrollo local (Quarkus dev mode)
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: technicians
+    description: Tecnicos del taller
+
+paths:
+  /technicians:
+    get:
+      operationId: listTechnicians
+      summary: Consultar listado de tecnicos
+      description: >
+        Cubre RF-020, mostrado en un modal desde el panel segun el
+        mockup. Despachador tiene solo lectura; Administrador acceso
+        total (ver matriz de permisos).
+      tags: [technicians]
+      parameters:
+        - name: disponible
+          in: query
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: Listado de tecnicos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Technician"
+
+    post:
+      operationId: createTechnician
+      summary: Registrar tecnico
+      description: Cubre RF-021. Requiere rol Administrador.
+      tags: [technicians]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TechnicianCreate"
+      responses:
+        "201":
+          description: Tecnico creado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Technician"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /technicians/{technicianId}:
+    parameters:
+      - $ref: "#/components/parameters/TechnicianId"
+    get:
+      operationId: getTechnician
+      summary: Consultar perfil de tecnico
+      tags: [technicians]
+      responses:
+        "200":
+          description: Perfil del tecnico
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Technician"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      operationId: updateTechnician
+      summary: Editar tecnico
+      description: Cubre RF-021. Requiere rol Administrador.
+      tags: [technicians]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TechnicianCreate"
+      responses:
+        "200":
+          description: Tecnico actualizado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Technician"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+components:
+  parameters:
+    TechnicianId:
+      name: technicianId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  responses:
+    NotFound:
+      description: Recurso no encontrado
+    Forbidden:
+      description: >
+        El rol del usuario autenticado no tiene permiso para esta
+        accion (ver matriz de permisos, requerimientos seccion 2.1).
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    TechnicianCreate:
+      type: object
+      required: [nombre, especialidad]
+      properties:
+        nombre:
+          type: string
+        especialidad:
+          type: string
+        disponibilidad:
+          type: boolean
+          default: true
+
+    Technician:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        nombre:
+          type: string
+        especialidad:
+          type: string
+        disponibilidad:
+          type: boolean

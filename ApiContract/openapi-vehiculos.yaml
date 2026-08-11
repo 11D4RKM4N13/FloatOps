@@ -1,0 +1,292 @@
+openapi: 3.0.3
+info:
+  title: FloatOps API - Vehiculos
+  description: >
+    Contrato de la API REST para el recurso Vehicle. Cubre RF-016 a
+    RF-019 y RF-034.
+  version: "0.1.0"
+
+servers:
+  - url: https://api.floatops.com/v1
+    description: Produccion (conceptual, no confirmado)
+  - url: http://localhost:8080/v1
+    description: Desarrollo local (Quarkus dev mode)
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: vehicles
+    description: Gestion de vehiculos de la flota atendida por el taller
+
+paths:
+  /vehicles:
+    get:
+      operationId: listVehicles
+      summary: Consultar listado de flota con filtros avanzados
+      description: Cubre RF-016 y RF-034.
+      tags: [vehicles]
+      parameters:
+        - name: clientId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: tipo
+          in: query
+          description: Tipo de vehiculo (comercial, particular, maquinaria pesada, etc.)
+          schema:
+            type: string
+        - name: estado
+          in: query
+          schema:
+            $ref: "#/components/schemas/EstadoVehiculo"
+        - name: estadoMantenimiento
+          in: query
+          description: atrasado, proximo_a_vencer, programado (calculo pendiente de confirmar)
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Listado paginado de vehiculos
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/VehicleSummary"
+                  total:
+                    type: integer
+
+    post:
+      operationId: createVehicle
+      summary: Registrar vehiculo
+      description: >
+        Cubre RF-018. Permite asociar un cliente existente (clientId)
+        o crear uno nuevo inline (newClient) como atajo, sin salir del
+        formulario - ambos caminos coexisten con la gestion dedicada
+        de clientes (RF-030).
+      tags: [vehicles]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VehicleCreate"
+      responses:
+        "201":
+          description: Vehiculo creado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Vehicle"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+
+  /vehicles/{vehicleId}:
+    parameters:
+      - $ref: "#/components/parameters/VehicleId"
+    get:
+      operationId: getVehicle
+      summary: Consultar perfil de vehiculo
+      description: >
+        Cubre RF-017: identificacion, tipo, kilometraje y contador de
+        ordenes abiertas. El historial completo de ordenes se consulta
+        aparte en /vehicles/{vehicleId}/work-orders.
+      tags: [vehicles]
+      responses:
+        "200":
+          description: Perfil del vehiculo
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Vehicle"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      operationId: updateVehicle
+      summary: Editar vehiculo
+      description: Cubre RF-018.
+      tags: [vehicles]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VehicleCreate"
+      responses:
+        "200":
+          description: Vehiculo actualizado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Vehicle"
+
+  /vehicles/{vehicleId}/deactivate:
+    parameters:
+      - $ref: "#/components/parameters/VehicleId"
+    post:
+      operationId: deactivateVehicle
+      summary: Dar de baja un vehiculo
+      description: >
+        Cubre RF-019. Requiere rol Administrador. Un vehiculo dado de
+        baja no queda disponible para nuevas ordenes.
+      tags: [vehicles]
+      responses:
+        "200":
+          description: Vehiculo dado de baja
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Vehicle"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /vehicles/{vehicleId}/work-orders:
+    parameters:
+      - $ref: "#/components/parameters/VehicleId"
+    get:
+      operationId: listVehicleWorkOrders
+      summary: Consultar historial de ordenes del vehiculo
+      description: Cubre la parte de historial de RF-017.
+      tags: [vehicles]
+      responses:
+        "200":
+          description: Historial de ordenes de trabajo del vehiculo
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    stageName:
+                      type: string
+                    descripcion:
+                      type: string
+
+components:
+  parameters:
+    VehicleId:
+      name: vehicleId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  responses:
+    NotFound:
+      description: Recurso no encontrado
+    Forbidden:
+      description: >
+        El rol del usuario autenticado no tiene permiso para esta
+        accion (ver matriz de permisos, requerimientos seccion 2.1).
+    ValidationError:
+      description: Error de validacion de campos obligatorios
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    EstadoVehiculo:
+      type: string
+      enum: [ACTIVO, DADO_DE_BAJA]
+
+    VehicleCreate:
+      type: object
+      required: [placa, vin, marca, modelo, tipo, kilometraje]
+      properties:
+        placa:
+          type: string
+        vin:
+          type: string
+        marca:
+          type: string
+        modelo:
+          type: string
+        tipo:
+          type: string
+        kilometraje:
+          type: integer
+        clientId:
+          type: string
+          format: uuid
+          description: Cliente existente. Omitir si se usa newClient.
+        newClient:
+          type: object
+          description: Atajo para crear cliente inline (RF-030 via RF-018)
+          properties:
+            nombre:
+              type: string
+            tipo:
+              type: string
+              enum: [EMPRESA, PERSONA_NATURAL]
+            telefono:
+              type: string
+            correo:
+              type: string
+            direccion:
+              type: string
+
+    VehicleSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        placa:
+          type: string
+        marca:
+          type: string
+        modelo:
+          type: string
+        estado:
+          $ref: "#/components/schemas/EstadoVehiculo"
+        estadoMantenimiento:
+          type: string
+
+    Vehicle:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        placa:
+          type: string
+        vin:
+          type: string
+        marca:
+          type: string
+        modelo:
+          type: string
+        tipo:
+          type: string
+        kilometraje:
+          type: integer
+        estado:
+          $ref: "#/components/schemas/EstadoVehiculo"
+        clientId:
+          type: string
+          format: uuid
+        ordenesAbiertas:
+          type: integer

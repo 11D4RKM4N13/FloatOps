@@ -30,10 +30,10 @@ services:
       - ./keycloak/floatops-realm.json:/opt/keycloak/data/import/floatops-realm.json:ro
 
   quarkus-api:
-    # El docker-compose.yml vive dentro de la carpeta del proyecto Quarkus
-    # (junto al pom.xml), por eso el contexto es "." y no una subcarpeta.
+    # Monorepo: docker-compose.yml vive en la raiz, el proyecto Quarkus
+    # esta en ./backend (renombrado de code-with-quarkus).
     build:
-      context: .
+      context: ./backend
       dockerfile: src/main/docker/Dockerfile.jvm
     container_name: floatops-api
     depends_on:

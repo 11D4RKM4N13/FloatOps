@@ -1,0 +1,91 @@
+openapi: 3.0.3
+info:
+  title: FloatOps API - Notificaciones
+  description: >
+    Contrato de la API REST para Notificaciones. Cubre RF-026 desde
+    el lado de consulta del usuario. El envio (in-app, email,
+    WhatsApp) es interno, disparado por otros eventos del sistema
+    (ej. cambio de etapa, stock bajo) - no se expone como endpoint
+    publico que un cliente dispare directamente.
+  version: "0.1.0"
+
+servers:
+  - url: https://api.floatops.com/v1
+    description: Produccion (conceptual, no confirmado)
+  - url: http://localhost:8080/v1
+    description: Desarrollo local (Quarkus dev mode)
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: notifications
+    description: Notificaciones del usuario autenticado
+
+paths:
+  /notifications:
+    get:
+      operationId: listMyNotifications
+      summary: Consultar notificaciones del usuario autenticado
+      tags: [notifications]
+      parameters:
+        - name: leida
+          in: query
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: Notificaciones del usuario
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Notification"
+
+  /notifications/{notificationId}/read:
+    parameters:
+      - name: notificationId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    patch:
+      operationId: markNotificationRead
+      summary: Marcar notificacion como leida
+      tags: [notifications]
+      responses:
+        "200":
+          description: Notificacion marcada como leida
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Notification"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Notification:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        tipoEvento:
+          type: string
+        mensaje:
+          type: string
+        canal:
+          type: string
+          enum: [IN_APP, EMAIL, WHATSAPP]
+        leida:
+          type: boolean
+        timestamp:
+          type: string
+          format: date-time

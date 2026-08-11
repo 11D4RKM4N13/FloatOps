@@ -66,7 +66,7 @@ Alineados con el menú lateral confirmado en los mockups (`PANEL`, `ÓRDENES DE 
 | Entidad | Campos clave | Relaciones | Notas |
 |---|---|---|---|
 | `Vehicle` | placa, VIN, marca, modelo, tipo, kilometraje, **estado (activo / dado de baja)** | 1—N `WorkOrder`, N—1 `Client` | Registro/edición y baja de vehículo confirmados como requeridos; campos inferidos a partir del perfil de vehículo visto en el mockup (placa, VIN, marca/modelo, tipo, kilometraje). **Actualización:** FloatOps es un taller de reparación que atiende tanto empresas con flota como personas naturales — ver `Client` |
-| `Client` | nombre, **tipo (empresa / persona natural)**, datos de contacto | 1—N `Vehicle` | ✅ Confirmado: no requiere login ni portal propio. Interactúa presencialmente en el establecimiento o por otro medio de comunicación (ej. teléfono); el despachador registra sus datos. Un cliente de paso (no recurrente) usa los mismos campos obligatorios que cualquier cliente — sin flujo simplificado. ✅ Se asocia al vehículo por dos caminos confirmados: pantalla dedicada de gestión de clientes, o atajo inline desde el formulario de registro de vehículo |
+| `Client` | nombre, **tipo (empresa / persona natural)**, **teléfono, correo, dirección** | 1—N `Vehicle` | ✅ Confirmado: no requiere login ni portal propio. Interactúa presencialmente en el establecimiento o por otro medio de comunicación (ej. teléfono); el despachador registra sus datos. Un cliente de paso (no recurrente) usa los mismos campos obligatorios que cualquier cliente — sin flujo simplificado. ✅ Se asocia al vehículo por dos caminos confirmados: pantalla dedicada de gestión de clientes, o atajo inline desde el formulario de registro de vehículo. ✅ Contacto separado en 3 campos (no un solo texto genérico), confirmado a partir del mockup de Claude Design |
 | `WorkOrder` | prioridad, descripción del problema, tipo de servicio, fecha programada, presupuesto, **cotización aprobada (booleano)**, **lista para revisión (booleano)** | N—1 `Vehicle`, N—1 `Technician`, N—1 `Stage`, 1—N `ChecklistItem`, 1—N `Photo`, 1—N `WorkOrderPart` | ✅ Técnico se puede reasignar en cualquier etapa (restringido a Despachador/Administrador). ✅ La cotización requiere aprobación del cliente, registrada manualmente por el despachador (el cliente no tiene acceso al sistema) — ⚠️ pendiente confirmar si bloquea el avance a "En taller" (depende de un criterio aún por explicar). ✅ El técnico marca `listaParaRevision=true` desde móvil; el despachador completa la orden por separado (RF-031), para no chocar con la restricción de rol sobre cambio de etapa |
 | `Stage` | nombre, orden/posición, activo | 1—N `WorkOrder` | ✅ Nueva entidad: las etapas del kanban ya no son un enum fijo, son un catálogo configurable por el Administrador. Los 4 valores vistos en el mockup (Requiere atención, Programado, En taller, Completados) son la configuración inicial por defecto, no un límite |
 | `Technician` | nombre, especialidad, disponibilidad | 1—N `WorkOrder` | CRUD completo confirmado; el listado/perfil se visualiza **en un modal** desde el panel |
@@ -238,7 +238,7 @@ stateDiagram-v2
     end note
 ```
 
-> ✅ Confirmado: el criterio de bloqueo es el **valor de la cotización**. Si supera un umbral (⚠️ monto exacto pendiente), la orden no avanza a "En taller" sin la aprobación adicional de Supervisor/Gerente (RF-039), además de la aprobación del cliente (RF-033). Por debajo del umbral, solo requiere la aprobación del cliente.
+> ✅ Confirmado: el criterio de bloqueo es el **valor de la cotización**. Si supera un umbral **configurable por el Administrador** (RF-040, no un valor fijo en código), la orden no avanza a "En taller" sin la aprobación adicional de Supervisor/Gerente (RF-039), además de la aprobación del cliente (RF-033). Por debajo del umbral, solo requiere la aprobación del cliente.
 
 ### 5.4 Estado del vehículo
 
@@ -269,13 +269,17 @@ Confirmadas por el equipo:
 - [x] Auditoría de coherencia entre casos de uso narrativos (sección 4) y RF formales, **en los 11 módulos** — se agregaron RF-037 (cola de órdenes) y RF-038 (cerrar sesión), se fusionaron líneas duplicadas en Vehículos/Administración, y se quitaron duplicados cruzados de módulo en Técnicos/Repuestos que en realidad pertenecían a Órdenes de trabajo
 - [x] Diagramas de estado de Panel y Órdenes de trabajo: Panel no tiene entidad propia con ciclo de vida (sin diagrama); Órdenes de trabajo cubierto con etapa del kanban, asignación de técnico y aprobación de cotización (sección 5.1 a 5.3)
 - [ ] Conectar Lucid para construir el diagrama de clases (UML) y el diagrama de casos de uso completo de forma colaborativa
-- [ ] Confirmar matriz de permisos de los 5 roles (administrador, despachador, técnico, supervisor/gerente, contador/facturación)
+- [x] Confirmar matriz de permisos de los 5 roles (administrador, despachador, técnico, supervisor/gerente, contador/facturación)
 - [x] Confirmar si auditoría requiere pantalla de consulta dedicada — sí, para administradores
-- [ ] Confirmar el criterio exacto que determina si la cotización sin aprobar bloquea el avance a "En taller" (confirmado que "depende", falta el criterio)
+- [x] Confirmar el criterio exacto que determina si la cotización sin aprobar bloquea el avance a "En taller" — cotizaciones de alto valor requieren aprobación de Supervisor/Gerente (RF-039)
+- [x] Definir el umbral de valor para cotización "de alto valor" — se confirma que es configurable por el Administrador (RF-040), no un valor fijo
+- [x] Agregar `floatops-mobile` al `floatops-realm.json`
+- [x] Definir métricas de RNF-001, RNF-004, RNF-005, RNF-006 — confirmadas por Edwin
+- [x] Definir formato de exportación de informes — CSV y PDF confirmados
 - [x] Definir el flujo de "completar orden" desde la vista móvil — técnico marca lista para revisión, despachador completa
 - [x] Definir alcance detallado del módulo de Informes — 2 informes confirmados para MVP (⚠️ falta definir filtros/exportación)
 - [x] Confirmar si la asociación vehículo-cliente debe ser inline o en pantallas separadas — ambas coexisten
-- [ ] Definir integración concreta con proveedor de WhatsApp Business API
+- [ ] Definir integración concreta con proveedor de WhatsApp Business API — ✅ confirmado que se implementará, pero en una siguiente iteración, no en el arranque del MVP (in-app y email sí van desde el inicio)
 - [x] DIAN — confirmado fuera del MVP, siguiente iteración
 - [x] Diagrama de estado del vehículo (sección 5.4)
 - [ ] Diseñar mockups faltantes: gestión de vehículos (alta/edición/baja), gestión de clientes, gestión de técnicos, gestión de repuestos/inventario, informes, login (incluida pantalla de actualización forzada de contraseña), administración (usuarios/catálogos/etapas del kanban), notificaciones, auditoría
