@@ -1,0 +1,35 @@
+@startuml RF-019
+!pragma layout smetana
+skinparam actorStyle awesome
+left to right direction 
+
+title Caso de uso: RF-019 - Dar de baja un vehiculo
+
+' Convencion de color reutilizable en todos los diagramas de RF de FloatOps
+skinparam usecase {
+  BackgroundColor<<Alta>> LightSkyBlue
+  BorderColor<<Alta>> SteelBlue
+  BackgroundColor<<Media>> Khaki
+  BorderColor<<Media>> DarkKhaki
+  BackgroundColor<<Baja>> Gainsboro
+  BorderColor<<Baja>> Gray
+  ArrowColor SteelBlue
+}
+
+actor Administrador
+
+package "vehicles" {
+    usecase UC1 as "Dar de baja un vehiculo" <<Alta>>
+}
+
+Administrador --> UC1 : Da de baja
+
+note right of UC1
+  **RF-019** - Prioridad: Alta
+  --
+  Criterios de aceptacion:
+  * Solicita confirmacion de baja
+  * El vehiculo deja de estar disponible 
+end note
+
+@enduml

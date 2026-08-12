@@ -1,0 +1,33 @@
+@startuml RF-020
+!pragma layout smetana
+skinparam actorStyle awesome
+left to right direction 
+
+title Caso de uso: RF-020 - Consultar listado / perfil de tecnicos
+
+' Convencion de color reutilizable en todos los diagramas de RF de FloatOps
+skinparam usecase {
+  BackgroundColor<<Alta>> LightSkyBlue
+  BorderColor<<Alta>> SteelBlue
+  BackgroundColor<<Media>> Khaki
+  BorderColor<<Media>> DarkKhaki
+  BackgroundColor<<Baja>> Gainsboro
+  BorderColor<<Baja>> Gray
+  ArrowColor SteelBlue
+}
+
+actor Administrador
+actor Despachador
+
+package "Technicians" {
+    usecase UC1 as "Consultar listado / perfil de tecnicos" <<Media>>
+}
+
+Administrador --> UC1 : consulta
+Despachador --> UC1 : consulta
+
+note right of UC1
+  **RF-020** - Prioridad: Media
+end note
+
+@enduml

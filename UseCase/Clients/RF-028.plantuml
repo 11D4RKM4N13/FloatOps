@@ -1,0 +1,37 @@
+@startuml RF-028
+!pragma layout smetana
+skinparam actorStyle awesome
+left to right direction 
+
+title Caso de uso: RF-028 - Asociar vehiculo a un cliente 
+
+' Convencion de color reutilizable en todos los diagramas de RF de FloatOps
+skinparam usecase {
+  BackgroundColor<<Alta>> LightSkyBlue
+  BorderColor<<Alta>> SteelBlue
+  BackgroundColor<<Media>> Khaki
+  BorderColor<<Media>> DarkKhaki
+  BackgroundColor<<Baja>> Gainsboro
+  BorderColor<<Baja>> Gray
+  ArrowColor SteelBlue
+}
+
+actor Administrador
+actor Despachador
+
+package "Clients" {
+    usecase UC1 as "Asociar vehiculo a un cliente" <<Alta>>
+}
+
+Administrador --> UC1 : Asocia
+Despachador --> UC1 : Asocia
+
+note right of UC1
+  **RF-028** - Prioridad: Alta
+  --
+  Criterios de aceptacion:
+  * El vehiculo queda vinculado al cliente
+  * Aparece en su perfil 
+end note
+
+@enduml
