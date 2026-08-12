@@ -1,0 +1,23 @@
+@startuml despliegue-desarrollo
+title FloatOps - Despliegue - Desarrollo local Docker Compose
+
+node "Maquina del desarrollador" {
+  node "Contenedor quarkus-api" as QuarkusNode {
+    component QuarkusAPI
+  }
+  node "Contenedor postgres" as PgNode {
+    database PostgreSQL
+  }
+  node "Contenedor keycloak" as KcNode {
+    component Keycloak
+  }
+  node "Contenedor minio" as MinioNode {
+    component MinIO
+  }
+}
+
+QuarkusAPI --> PostgreSQL : JDBC
+QuarkusAPI --> Keycloak : OIDC
+QuarkusAPI --> MinIO : S3 fotos RF-009
+
+@enduml

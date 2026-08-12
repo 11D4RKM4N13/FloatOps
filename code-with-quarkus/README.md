@@ -10,7 +10,9 @@ Este proyecto es parte del monorepo `FloatOps/` y vive en `backend/`. Para el co
 - **Hibernate ORM with Panache** — persistencia, entidades como active record
 - **PostgreSQL** — base de datos relacional
 - **Flyway** — migraciones de esquema versionadas
-- **Keycloak / OIDC** — autenticación (extensión aún no agregada al proyecto — ver [Próximos pasos](#próximos-pasos))
+- **Keycloak / OIDC** — autenticación y autorización por rol (`quarkus-oidc` + `@RolesAllowed`), conectado al realm `floatops`
+- **SmallRye OpenAPI** — expone Swagger UI y el spec generado desde las anotaciones `@Path`
+- **MinIO / Amazon S3** (`quarkus-amazon-s3`) — almacenamiento de fotos de órdenes (RF-009/RF-014), MinIO en dev, S3 real en producción
 
 ## Estructura del proyecto
 
@@ -74,6 +76,99 @@ Los scripts viven en `src/main/resources/db/migration/`, con el naming de Flyway
 
 Framework: JUnit 5 (incluido por defecto en el arquetipo de Quarkus). La estrategia de cobertura (¿pruebas de integración con Testcontainers contra Postgres real, o solo unitarias?) sigue como decisión abierta — ver `../docs/README.md`, sección de próximos pasos. El objetivo de cobertura acordado es ≥ 80% (RNF-007 en `../docs/requerimientos-floatops.md`).
 
+## Pruebas manuales contra Keycloak
+
+Los tests automatizados (`WorkOrderResourceTest`) usan `@TestSecurity` para simular roles sin necesitar un Keycloak real corriendo. Para probar la integración real de punta a punta (token real, emitido por Keycloak real, validado por `quarkus-oidc` real), hazlo a mano así:
+
+### 1. Prerrequisitos
+
+- `docker compose up -d postgres keycloak` desde la raíz del monorepo
+- `./mvnw quarkus:dev` desde `backend/`
+- El realm `floatops` debe tener los 4 usuarios de prueba definidos en `../keycloak/floatops-realm.json` (uno por rol: `admin.prueba`, `despachador.prueba`, `tecnico.prueba`, `supervisor.prueba`, todos con password `prueba123`)
+
+### 2. Obtener un token
+
+Usa el client `floatops-web` (público, no necesita `client_secret`) con el grant de contraseña directa:
+
+```shell script
+curl -X POST http://localhost:8081/realms/floatops/protocol/openid-connect/token \
+  -d 'client_id=floatops-web' -d 'grant_type=password' \
+  -d 'username=despachador.prueba' -d 'password=prueba123'
+```
+
+Para no copiar el token gigante a mano en cada prueba, guárdalo en una variable:
+
+```shell script
+TOKEN=$(curl -s -X POST http://localhost:8081/realms/floatops/protocol/openid-connect/token \
+  -d 'client_id=floatops-web' -d 'grant_type=password' \
+  -d 'username=despachador.prueba' -d 'password=prueba123' \
+  | python3 -c "import sys,json; print(json.load(sys.stdin)['access_token'])")
+```
+
+### 3. Probar un endpoint
+
+```shell script
+curl -H "Authorization: Bearer $TOKEN" http://localhost:8080/v1/work-orders
+```
+
+Nota el prefijo `/v1` — viene de la sección `servers:` de cada contrato OpenAPI, no lo olvides al probar cualquier endpoint.
+
+### 4. Confirmar que la restricción de rol bloquea de verdad
+
+La prueba que realmente importa no es que un endpoint funcione, sino que **rechace a quien no debería tener acceso**. Ejemplo con `registerSupervisorQuoteApproval` (`@RolesAllowed({"supervisor-gerente"})`, RF-039):
+
+```shell script
+# Con token de administrador.prueba (rol "administrador", NO autorizado aqui)
+curl -i -X POST -H "Authorization: Bearer $TOKEN" \
+  http://localhost:8080/v1/work-orders/00000000-0000-0000-0000-000000000000/supervisor-approval
+```
+
+Debe devolver `403 Forbidden`. Si en cambio usas un token de `supervisor.prueba`, debe devolver `404 Not Found` (el UUID de prueba no existe, pero eso confirma que la autorización sí lo dejó pasar).
+
+### Tabla de usuarios de prueba
+
+| Usuario | Password | Rol |
+|---|---|---|
+| `admin.prueba` | `prueba123` | administrador |
+| `despachador.prueba` | `prueba123` | despachador |
+| `tecnico.prueba` | `prueba123` | tecnico |
+| `supervisor.prueba` | `prueba123` | supervisor-gerente |
+
+> ⚠️ Estas credenciales son de **desarrollo local únicamente** — viven en texto plano en `floatops-realm.json`, nunca deben existir así en un ambiente real.
+
+## Almacenamiento de fotos (MinIO/S3)
+
+`POST /work-orders/{id}/photos` (RF-009/RF-014) sube el archivo a **MinIO** en desarrollo, o a **S3 real** en producción — mismo código (`quarkus-amazon-s3`), solo cambia el endpoint configurado.
+
+- **Consola web de MinIO:** <http://localhost:9001> (usuario `floatops` / password `floatops123`)
+- **Bucket:** `floatops-photos` — se crea automáticamente al arrancar Quarkus (`S3BucketInitializer`), MinIO no lo crea solo como sí haría S3 real con algunas configuraciones
+- **`CI_CD=true`** en el servicio de MinIO del `docker-compose.yml` reduce su consumo de RAM de ~1GB a ~256MB — necesario mantenerlo así en desarrollo, ver discusión de footprint en el historial de decisiones
+
+⚠️ **Pendiente:** `Photo.url` guarda la *key* interna del objeto en S3, no una URL accesible desde el navegador. Falta implementar generación de URLs firmadas temporales (`S3Presigner`) — no se confirmó si `quarkus-amazon-s3` lo expone como bean inyectable automáticamente.
+
+### Pruebas manuales de Note y almacenamiento de fotos — ✅ verificado de punta a punta
+
+Con un token de `tecnico.prueba` (`@RolesAllowed` de ambos endpoints) y una orden real ya creada:
+
+```shell script
+# Agregar nota (RF-014) - devuelve 204 No Content
+curl -i -X POST -H "Authorization: Bearer $TOKEN" \
+  "http://localhost:8080/v1/work-orders/{workOrderId}/notes" \
+  -H 'Content-Type: application/json' \
+  -d '{"texto": "Cliente reporta ruido al frenar"}'
+
+# Confirmar que quedo guardada - debe aparecer dentro de "notes"
+curl -H "Authorization: Bearer $TOKEN" \
+  "http://localhost:8080/v1/work-orders/{workOrderId}"
+
+# Adjuntar foto (RF-009/RF-014) - sube de verdad a MinIO
+curl -i -X POST -H "Authorization: Bearer $TOKEN" \
+  "http://localhost:8080/v1/work-orders/{workOrderId}/photos" \
+  -F 'file=@/ruta/a/una-imagen.jpg'
+```
+
+Confirmado el 12/08/2026: la nota aparece en el `GET` con el texto correcto, y la foto aparece físicamente en el bucket `floatops-photos` de la consola de MinIO con la key `{workOrderId}/{uuid}` esperada.
+
 ## Empaquetado
 
 ```shell script
@@ -124,15 +219,22 @@ Dentro de la red de Docker, el backend se conecta a `postgres:5432` y `keycloak:
 
 ## Contrato de API
 
-El contrato OpenAPI de este módulo (Órdenes de trabajo) está versionado por separado en [`../openapi/openapi-ordenes-trabajo.yaml`](../openapi/openapi-ordenes-trabajo.yaml), junto con los otros 10 módulos del sistema. Todavía no se agregó la extensión `quarkus-smallrye-openapi` a este proyecto — cuando se agregue, hay que decidir si el spec se genera desde las anotaciones `@Path` o si se sirve el YAML ya escrito como documento estático (`src/main/resources/META-INF/openapi.yaml`).
+El contrato OpenAPI de este módulo (Órdenes de trabajo) está versionado por separado en [`../ApiContract/openapi-ordenes-trabajo.yaml`](../ApiContract/openapi-ordenes-trabajo.yaml), junto con los otros 10 módulos del sistema. `WorkOrdersApi` (la interfaz que implementa `WorkOrderResource`) se **genera automáticamente** de ese `.yaml` en cada build vía `openapi-generator-maven-plugin` — ver la fase `generate-sources` en `pom.xml`. Con `quarkus-smallrye-openapi` agregado, Swagger UI (`/q/swagger-ui`) muestra el spec derivado de esas mismas anotaciones — el círculo completo: contrato → código generado → código real → contrato de vuelta.
 
 ## Próximos pasos
 
-- [ ] Agregar `quarkus-oidc` y conectar con el realm de Keycloak (`../keycloak/floatops-realm.json`)
-- [ ] Agregar `quarkus-smallrye-openapi` y decidir generación vs. documento estático
-- [ ] Implementar `repository/`, `dto/`, `service/`, `resource/` para `WorkOrder` (las entidades ya existen)
-- [ ] Definir estrategia de pruebas (unitarias vs. Testcontainers)
+- [x] Agregar `quarkus-oidc` y aplicar `@RolesAllowed` según la matriz de permisos — verificado con `curl` real (403/404 correctos)
+- [x] Agregar `quarkus-smallrye-openapi`
+- [x] Implementar `dto/`, `service/`, `resource/` para `WorkOrder` vía `openapi-generator-maven-plugin`
+- [x] `RolesResources.java` — era una prueba del propio Edwin, ya eliminada
+- [x] Entidad `Note` agregada (RF-014) — migración `V2__add_notes.sql`, **verificado con pruebas manuales el 12/08/2026**
+- [x] Almacenamiento real de fotos vía MinIO/S3 (`quarkus-amazon-s3`) — **verificado con pruebas manuales el 12/08/2026**, ver [Almacenamiento de fotos](#almacenamiento-de-fotos-minios3)
+- [ ] Generar URLs firmadas temporales (`S3Presigner`) para que el frontend pueda mostrar las fotos — no verificado si se inyecta automático con `quarkus-amazon-s3`
+- [ ] **Bloqueante real para seguir probando manualmente:** no existen endpoints para crear Vehículos, Técnicos ni Repuestos — actualmente se siembran a mano vía `V900__dev_seed_data.sql` (solo vehículo y tipo de servicio). El módulo de Vehículos es el siguiente a implementar, siguiendo exactamente el mismo patrón ya probado en Órdenes de trabajo (entidad → migración → contrato generado → service → resource → `@RolesAllowed` → tests)
+- [ ] `tipoServicio` se busca por nombre de texto en vez de por `serviceTypeId` (UUID) — frágil
+- [ ] Definir estrategia de pruebas de integración con base de datos (Dev Services ya configurado para tests, ver `application.properties`)
 - [ ] Migración `V2` para completar `Vehicle`/`Technician` cuando esos módulos se implementen
+- [ ] Repetir el patrón completo (entidad → migración → generador → seguridad) para los otros 10 módulos
 
 ## Documentación relacionada
 

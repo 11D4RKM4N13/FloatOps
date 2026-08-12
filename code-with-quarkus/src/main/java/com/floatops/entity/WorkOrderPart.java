@@ -1,13 +1,10 @@
 package com.floatops.entity;
 
-import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import jakarta.persistence.*;
 
-// Tabla intermedia explicita (no una simple N-N) para poder llevar
-// atributos propios como cantidad, y precio_al_momento en el futuro.
 @Entity
 @Table(name = "work_order_parts")
-public class WorkOrderPart extends PanacheEntity {
+public class WorkOrderPart extends BaseEntity {
 
     @Column(nullable = false)
     public int cantidad = 1;

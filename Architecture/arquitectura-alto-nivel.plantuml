@@ -19,6 +19,7 @@ package "Backend" {
 
 package "Datos" {
   database PostgreSQL
+  component ObjectStorage
 }
 
 package "Servicios externos" {
@@ -34,6 +35,7 @@ Tecnico --> MobileApp
 WebDashboard ..> QuarkusAPI : REST HTTPS
 MobileApp ..> QuarkusAPI : REST HTTPS
 QuarkusAPI ..> PostgreSQL : JDBC
+QuarkusAPI ..> ObjectStorage : S3 fotos RF-009
 QuarkusAPI ..> Keycloak : OIDC
 QuarkusAPI ..> WhatsAppAPI : notificaciones RF-026
 QuarkusAPI ..> EmailProvider : notificaciones RF-026

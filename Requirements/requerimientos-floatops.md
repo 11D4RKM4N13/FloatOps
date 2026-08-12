@@ -1,6 +1,6 @@
 # Definición de Requerimientos — FloatOps
 
-> Versión: 0.19
+> Versión: 0.21
 > Fecha: 07/08/2026
 > Autor: Edwin Suares
 > Estado: Borrador
@@ -250,3 +250,5 @@ Agrupados por módulo, en el mismo orden usado en `README.md`. Los IDs (`RF-XXX`
 | 0.17 | 07/08/2026 | Edwin Suares | Se confirman los RNF-001, 004, 005, 006 (ya no son propuesta, son decisión). Se decide mantener los 11 contratos OpenAPI independientes, sin consolidar. Se decide estructura de repositorio: monorepo. |
 | 0.18 | 07/08/2026 | Edwin Suares | Se revisan los 13 mockups nuevos generados por Claude Design. Se confirma separar el campo `contacto` de `Client` en tres: `telefono`, `correo`, `direccion` (según el mockup de alta de cliente). Se detectan y se marcan para corrección en el diseño errores de localización (CLP en vez de COP, +56 en vez de +57, dominio .cl en vez de .com/.com.co) — Colombia, no Chile. |
 | 0.19 | 07/08/2026 | Edwin Suares | Se corrige una desalineación real: el `code-with-quarkus` generado usa Java, no Kotlin como decía el README desde el inicio. Se confirma Java para el backend (el frontend sigue Kotlin Multiplatform). Se convierten las 10 entidades JPA/Panache de Kotlin a Java. Se corrige RNF-007 y la restricción de stack para reflejar Java en backend / Kotlin en frontend, no Java/Kotlin ambiguo. |
+| 0.20 | 12/08/2026 | Edwin Suares | Se cierran dos vacíos de diseño encontrados durante la implementación: se agrega la entidad `Note` (RF-014, migración V2) y se implementa almacenamiento real de fotos vía MinIO/S3 (`quarkus-amazon-s3`), reemplazando el placeholder anterior. Se actualiza el modelo de datos, el diagrama de clases, la arquitectura de alto nivel, ambos diagramas de despliegue, y se crea un diagrama de secuencia nuevo (`secuencia-adjuntar-foto.plantuml`). Pendiente: generación de URLs firmadas (`S3Presigner`), no verificado. |
+| 0.21 | 12/08/2026 | Edwin Suares | Se verifican con pruebas manuales de punta a punta `addNote` y `attachPhoto`: la nota queda registrada y visible en el `GET` de la orden, y la foto aparece físicamente en el bucket de MinIO con la key esperada. Con esto, el módulo de Órdenes de trabajo queda completo y probado end-to-end. Se identifica el siguiente bloqueo real: no hay endpoints para crear Vehículos/Técnicos/Repuestos, lo que fuerza a sembrar datos de prueba a mano — confirma que Vehículos es el módulo natural a seguir. |

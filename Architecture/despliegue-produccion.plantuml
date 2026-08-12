@@ -1,0 +1,38 @@
+@startuml despliegue-produccion
+title FloatOps - Despliegue - Produccion conceptual no confirmado
+
+cloud Internet
+
+node "Balanceador de carga" as LB
+
+node "Cluster Kubernetes" {
+  node "Pod quarkus-api replica 1" as Pod1 {
+    component QuarkusAPI1
+  }
+  node "Pod quarkus-api replica 2" as Pod2 {
+    component QuarkusAPI2
+  }
+  node "Pod keycloak" as PodKc {
+    component Keycloak
+  }
+}
+
+database "PostgreSQL administrado" as PostgreSQL
+cloud "S3 (AWS) - fotos RF-009" as S3
+
+cloud "Hosting estatico dashboard web" as WebHosting
+cloud "App stores app movil tecnicos" as AppStores
+
+Internet --> LB
+Internet --> WebHosting
+Internet --> AppStores
+LB --> QuarkusAPI1
+LB --> QuarkusAPI2
+QuarkusAPI1 --> PostgreSQL : JDBC
+QuarkusAPI2 --> PostgreSQL : JDBC
+QuarkusAPI1 --> Keycloak : OIDC
+QuarkusAPI2 --> Keycloak : OIDC
+QuarkusAPI1 --> S3
+QuarkusAPI2 --> S3
+
+@enduml

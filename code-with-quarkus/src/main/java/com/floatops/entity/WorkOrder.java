@@ -4,8 +4,8 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
-import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -19,7 +19,7 @@ import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "work_orders")
-public class WorkOrder extends PanacheEntity {
+public class WorkOrder extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -74,17 +74,17 @@ public class WorkOrder extends PanacheEntity {
     @OneToMany(mappedBy = "workOrder", cascade = CascadeType.ALL, orphanRemoval = true)
     public List<WorkOrderPart> parts = new ArrayList<>();
 
-    // RF-004 / kanban agrupado por etapa
-    public static List<WorkOrder> findByStage(Long stageId) {
+    @OneToMany(mappedBy = "workOrder", cascade = CascadeType.ALL, orphanRemoval = true)
+    public List<Note> notes = new ArrayList<>();
+
+    public static List<WorkOrder> findByStage(UUID stageId) {
         return list("stage.id", stageId);
     }
 
-    // RF-032 reasignacion / ordenes de un tecnico
-    public static List<WorkOrder> findByTechnician(Long technicianId) {
+    public static List<WorkOrder> findByTechnician(UUID technicianId) {
         return list("technician.id", technicianId);
     }
 
-    // RF-037 cola de ordenes abiertas: todo lo que no esta en la etapa "Completados"
     public static List<WorkOrder> findOpen() {
         return list("stage.nombre != ?1", "Completados");
     }

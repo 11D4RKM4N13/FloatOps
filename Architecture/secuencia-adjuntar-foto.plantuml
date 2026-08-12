@@ -1,0 +1,43 @@
+@startuml secuencia-adjuntar-foto
+title FloatOps - Secuencia - Adjuntar foto a orden (RF-009/RF-014)
+
+actor Usuario
+participant WebDashboard
+participant WorkOrderResource
+participant WorkOrderService
+participant S3Client
+participant MinIO
+database PostgreSQL
+
+note over Usuario
+  Despachador (RF-009, desde el
+  formulario web) o Tecnico
+  (RF-014, desde vista movil)
+end note
+
+Usuario -> WebDashboard : selecciona foto
+WebDashboard -> WorkOrderResource : POST /work-orders/{id}/photos\n(multipart/form-data)
+WorkOrderResource -> WorkOrderService : adjuntarFoto(id, archivo)
+
+WorkOrderService -> WorkOrderService : verifica que la orden existe
+
+WorkOrderService -> S3Client : putObject(bucket, key, bytes)
+S3Client -> MinIO : sube el objeto
+MinIO --> S3Client : ok
+
+WorkOrderService -> PostgreSQL : persist(Photo)\nurl = key del objeto
+
+WorkOrderService --> WorkOrderResource : Photo (DTO)
+WorkOrderResource --> WebDashboard : 201 Created
+WebDashboard --> Usuario : foto adjuntada
+
+note over WorkOrderService, MinIO
+  El campo "url" del DTO guarda la
+  KEY interna del objeto, no una URL
+  publica. Generar una URL firmada
+  temporal (S3Presigner) para que el
+  frontend pueda mostrar la imagen
+  sigue pendiente - no verificado.
+end note
+
+@enduml

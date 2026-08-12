@@ -1,11 +1,10 @@
 package com.floatops.entity;
 
-import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import jakarta.persistence.*;
 
 @Entity
 @Table(name = "checklist_items")
-public class ChecklistItem extends PanacheEntity {
+public class ChecklistItem extends BaseEntity {
 
     @Column(nullable = false)
     public String descripcion;

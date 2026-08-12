@@ -444,6 +444,22 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Photo"
+        notes:
+          type: array
+          items:
+            $ref: "#/components/schemas/Note"
+
+    Note:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        texto:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
 
     ChecklistItem:
       type: object

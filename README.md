@@ -28,7 +28,8 @@ Sistema de gestión de flota y órdenes de servicio (fleet service management).
   - Estado compartido vía `StateFlow` / `ViewModel` en `commonMain`
 
 **Infraestructura**
-- Docker Compose (Quarkus + PostgreSQL + Keycloak) en desarrollo local
+- Docker Compose (Quarkus + PostgreSQL + Keycloak + MinIO) en desarrollo local
+- **MinIO** — almacenamiento de objetos S3-compatible para fotos de órdenes (RF-009/RF-014), en producción sería S3 real (mismo código, `quarkus-amazon-s3`)
 - Preparado para Kubernetes si se requiere escalar
 
 **Herramienta de modelado UML**
@@ -72,7 +73,8 @@ Alineados con el menú lateral confirmado en los mockups (`PANEL`, `ÓRDENES DE 
 | `Technician` | nombre, especialidad, disponibilidad | 1—N `WorkOrder` | CRUD completo confirmado; el listado/perfil se visualiza **en un modal** desde el panel |
 | `ChecklistItem` | descripción, completado, orden | N—1 `WorkOrder` | Estado exacto de "completado" aún no visto explícitamente en el mockup (⚠️ inferido del checkbox) |
 | `Part` | código, nombre, stock, precio | N—N `WorkOrder` (vía `WorkOrderPart`) | Gestión de stock / alta de repuesto confirmada como requerida |
-| `Photo` | url, timestamp | N—1 `WorkOrder` | — |
+| `Photo` | url (key del objeto en S3/MinIO), timestamp | N—1 `WorkOrder` | ✅ Implementado: almacenamiento real vía MinIO (dev) / S3 (producción), no un placeholder. `url` guarda la key interna del objeto, no una URL pública — pendiente generar URLs firmadas temporales (`S3Presigner`, no verificado aún) |
+| `Note` | texto, timestamp | N—1 `WorkOrder` | ✅ Agregada — vacío de diseño original de RF-014 (nunca se había modelado), cierre de composición igual que `ChecklistItem`/`Photo` |
 | `User` | nombre, credenciales, rol, **última actualización de contraseña, estado (activo / inhabilitado)** | N—1 `Role` | Autenticación vía Keycloak/OIDC. ✅ Contraseña debe rotarse cada 30 días; si no, el usuario queda inhabilitado hasta actualizarla |
 | `Role` | nombre (ej. administrador, despachador, técnico) | 1—N `User` | ⚠️ Roles concretos son una propuesta inicial, pendiente de confirmar lista definitiva |
 | `Notification` | tipo de evento, mensaje, **canal (in-app / email / WhatsApp)**, leída/no leída, timestamp | N—1 `User` (destinatario) | ✅ Canales confirmados: in-app, email y WhatsApp. Se dispara por acciones del sistema (ver 4.10) |

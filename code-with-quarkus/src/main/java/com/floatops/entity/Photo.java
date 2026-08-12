@@ -1,12 +1,11 @@
 package com.floatops.entity;
 
-import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "photos")
-public class Photo extends PanacheEntity {
+public class Photo extends BaseEntity {
 
     @Column(nullable = false)
     public String url;

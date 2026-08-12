@@ -101,6 +101,12 @@ class Photo {
   timestamp : LocalDateTime
 }
 
+class Note {
+  id : Long
+  texto : String
+  timestamp : LocalDateTime
+}
+
 class Part {
   id : Long
   codigo : String
@@ -134,6 +140,7 @@ Stage "1" -- "0..N" WorkOrder : define etapa
 ServiceType "1" -- "0..N" WorkOrder : tipifica
 WorkOrder "1" *-- "0..N" ChecklistItem : contiene
 WorkOrder "1" *-- "0..N" Photo : contiene
+WorkOrder "1" *-- "0..N" Note : contiene
 WorkOrder "1" *-- "0..N" WorkOrderPart : incluye
 Part "1" -- "0..N" WorkOrderPart : usado en
 PartCategory "1" o-- "0..N" Part : categoriza

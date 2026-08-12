@@ -37,8 +37,12 @@
       "standardFlowEnabled": true,
       "directAccessGrantsEnabled": true,
       "serviceAccountsEnabled": true,
-      "redirectUris": ["http://localhost:8080/*"],
-      "webOrigins": ["http://localhost:8080"]
+      "redirectUris": [
+        "http://localhost:8080/*"
+      ],
+      "webOrigins": [
+        "http://localhost:8080"
+      ]
     },
     {
       "clientId": "floatops-web",
@@ -47,8 +51,13 @@
       "publicClient": true,
       "protocol": "openid-connect",
       "standardFlowEnabled": true,
-      "redirectUris": ["http://localhost:3000/*"],
-      "webOrigins": ["http://localhost:3000"]
+      "directAccessGrantsEnabled": true,
+      "redirectUris": [
+        "http://localhost:3000/*"
+      ],
+      "webOrigins": [
+        "http://localhost:3000"
+      ]
     },
     {
       "clientId": "floatops-mobile",
@@ -57,10 +66,90 @@
       "publicClient": true,
       "protocol": "openid-connect",
       "standardFlowEnabled": true,
-      "redirectUris": ["floatops://callback"],
+      "redirectUris": [
+        "floatops://callback"
+      ],
       "attributes": {
         "pkce.code.challenge.method": "S256"
       }
+    }
+  ],
+  "users": [
+    {
+      "username": "admin.prueba",
+      "enabled": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "prueba123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "administrador"
+      ],
+      "requiredActions": [],
+      "emailVerified": true,
+      "firstName": "Admin",
+      "lastName": "Prueba",
+      "email": "admin.prueba@floatops.dev"
+    },
+    {
+      "username": "despachador.prueba",
+      "enabled": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "prueba123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "despachador"
+      ],
+      "requiredActions": [],
+      "emailVerified": true,
+      "firstName": "Despachador",
+      "lastName": "Prueba",
+      "email": "despachador.prueba@floatops.dev"
+    },
+    {
+      "username": "tecnico.prueba",
+      "enabled": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "prueba123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "tecnico"
+      ],
+      "requiredActions": [],
+      "emailVerified": true,
+      "firstName": "Tecnico",
+      "lastName": "Prueba",
+      "email": "tecnico.prueba@floatops.dev"
+    },
+    {
+      "username": "supervisor.prueba",
+      "enabled": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "prueba123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "supervisor-gerente"
+      ],
+      "requiredActions": [],
+      "emailVerified": true,
+      "firstName": "Supervisor",
+      "lastName": "Prueba",
+      "email": "supervisor.prueba@floatops.dev"
     }
   ]
 }
