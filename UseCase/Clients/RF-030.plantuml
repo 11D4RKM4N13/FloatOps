@@ -1,0 +1,38 @@
+@startuml RF-030
+!pragma layout smetana
+skinparam actorStyle awesome
+left to right direction 
+
+title Caso de uso: RF-030 - Registrar / editar cliente
+
+' Convencion de color reutilizable en todos los diagramas de RF de FloatOps
+skinparam usecase {
+  BackgroundColor<<Alta>> LightSkyBlue
+  BorderColor<<Alta>> SteelBlue
+  BackgroundColor<<Media>> Khaki
+  BorderColor<<Media>> DarkKhaki
+  BackgroundColor<<Baja>> Gainsboro
+  BorderColor<<Baja>> Gray
+  ArrowColor SteelBlue
+}
+
+actor Administrador
+actor Despachador
+
+package "Clients" {
+    usecase UC1 as "Registrar / editar cliente" <<Alta>>
+}
+
+Administrador --> UC1 : Registra / edita
+Despachador --> UC1 : Registra / edita
+
+note right of UC1
+  **RF-030** - Prioridad: Alta
+  --
+  Criterios de aceptacion:
+  * Todo cliente, recurrente o de paso, se
+  registra con los mismos campos obligatorios
+  * No existe un flujo simplificado alterno 
+end note
+
+@enduml

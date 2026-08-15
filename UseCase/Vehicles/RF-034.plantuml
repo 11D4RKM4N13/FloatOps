@@ -1,0 +1,37 @@
+@startuml RF-034
+!pragma layout smetana
+skinparam actorStyle awesome
+left to right direction 
+
+title Caso de uso: RF-034 - Filtrar listado de vehiculos
+
+' Convencion de color reutilizable en todos los diagramas de RF de FloatOps
+skinparam usecase {
+  BackgroundColor<<Alta>> LightSkyBlue
+  BorderColor<<Alta>> SteelBlue
+  BackgroundColor<<Media>> Khaki
+  BorderColor<<Media>> DarkKhaki
+  BackgroundColor<<Baja>> Gainsboro
+  BorderColor<<Baja>> Gray
+  ArrowColor SteelBlue
+}
+
+actor Administrador
+actor Despachador
+
+package "vehicles" {
+    usecase UC1 as "Filtrar listado de vehiculos" <<Media>>
+}
+
+Administrador --> UC1 : Filtra
+Despachador --> UC1 : Filtra
+
+note right of UC1
+  **RF-034** - Prioridad: Media
+  --
+  Criterios de aceptacion:
+  * Permite filtrar por estado, tipo y base 
+  * Devuelve resultados coincidentes
+end note
+
+@enduml

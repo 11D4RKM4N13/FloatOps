@@ -1,0 +1,37 @@
+@startuml RF-018
+!pragma layout smetana
+skinparam actorStyle awesome
+left to right direction 
+
+title Caso de uso: RF-018 - Registrar / editar vehiculo
+
+' Convencion de color reutilizable en todos los diagramas de RF de FloatOps
+skinparam usecase {
+  BackgroundColor<<Alta>> LightSkyBlue
+  BorderColor<<Alta>> SteelBlue
+  BackgroundColor<<Media>> Khaki
+  BorderColor<<Media>> DarkKhaki
+  BackgroundColor<<Baja>> Gainsboro
+  BorderColor<<Baja>> Gray
+  ArrowColor SteelBlue
+}
+
+actor Administrador
+actor Despachador
+
+package "vehicles" {
+    usecase UC1 as "Registrar / editar vehiculo" <<Alta>>
+}
+
+Administrador --> UC1 : Registra / edita
+Despachador --> UC1 : Registra / edita
+
+note right of UC1
+  **RF-018** - Prioridad: Alta
+  --
+  Criterios de aceptacion:
+  * Valida placa unica
+  * Valida campos obligatorios
+end note
+
+@enduml

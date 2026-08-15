@@ -1,0 +1,37 @@
+@startuml RF-017
+!pragma layout smetana
+skinparam actorStyle awesome
+left to right direction 
+
+title Caso de uso: RF-017 - Consultar perfil de vehiculo
+
+' Convencion de color reutilizable en todos los diagramas de RF de FloatOps
+skinparam usecase {
+  BackgroundColor<<Alta>> LightSkyBlue
+  BorderColor<<Alta>> SteelBlue
+  BackgroundColor<<Media>> Khaki
+  BorderColor<<Media>> DarkKhaki
+  BackgroundColor<<Baja>> Gainsboro
+  BorderColor<<Baja>> Gray
+  ArrowColor SteelBlue
+}
+
+actor Administrador
+actor Despachador
+
+package "vehicles" {
+    usecase UC1 as "Consultar perfil de vehiculo" <<Alta>>
+}
+
+Administrador --> UC1 : consulta
+Despachador --> UC1 : consulta
+
+note right of UC1
+  **RF-017** - Prioridad: Alta
+  --
+  Criterios de aceptacion:
+  * Muestra identificacion de vehiculo
+  * Incluye historial de ordenes
+end note
+
+@enduml
