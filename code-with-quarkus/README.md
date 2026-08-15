@@ -125,6 +125,11 @@ curl -i -X POST -H "Authorization: Bearer $TOKEN" \
 
 Debe devolver `403 Forbidden`. Si en cambio usas un token de `supervisor.prueba`, debe devolver `404 Not Found` (el UUID de prueba no existe, pero eso confirma que la autorización sí lo dejó pasar).
 
+### 5. Crear una nueva orden de reparación
+```shell script
+curl -i -X POST -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' -H 'accept: application/json' 'http://localhost:8080/v1/work-orders' -d '{"vehicleId": "f585c483-80d1-4fbf-a8c7-3e438432d290", "tipoServicio": "Cambio de aceite", "descripcion": "Cambio de aceite camioneta", "prioridad": "BAJA", "fechaProgramada": "2026-08-14", "technicianId": "913347f3-ba6a-4413-8bef-95bcf3fe468b", "partIds": ["C72aFC59-E1dC-A6C3-f7a9-30D926AcCB16"]}'
+```
+
 ### Tabla de usuarios de prueba
 
 | Usuario | Password | Rol |
