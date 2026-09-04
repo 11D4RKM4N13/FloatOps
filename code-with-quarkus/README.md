@@ -46,7 +46,7 @@ Quarkus dev mode da recarga en caliente: los cambios en el código se aplican si
 
 1. Desde la **raíz del monorepo** (no desde `backend/`), levanta solo las dependencias, no el propio backend:
    ```shell script
-   docker compose up -d postgres keycloak
+   docker compose up -d postgres keycloak minio
    ```
 2. Confirma que Postgres está listo (no solo "running", sino "healthy"):
    ```shell script

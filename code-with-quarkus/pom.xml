@@ -102,6 +102,25 @@
             <artifactId>rest-assured</artifactId>
             <scope>test</scope>
         </dependency>
+        <!-- Sin esto, jacoco-maven-plugin reporta 0% en todo lo que corre
+             dentro de un @QuarkusTest (WorkOrderService, entidades, etc.):
+             Quarkus carga esas clases con su propio QuarkusClassLoader, que
+             el javaagent estandar de JaCoCo no instrumenta. Esta extension
+             instrumenta el bytecode dentro de ese classloader; ver
+             exclClassLoaders mas abajo para que ambos no choquen. -->
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-jacoco</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <!-- @TestSecurity permite simular los roles de @RolesAllowed
+             (tecnico, despachador, administrador, supervisor-gerente) sin
+             necesitar un Keycloak real corriendo ni tokens JWT de verdad. -->
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-test-security</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -173,7 +192,25 @@
                             </configOptions>
                         </configuration>
                     </execution>
-                    <!-- TODO: repetir un <execution> por cada uno de los otros 10
+                    <execution>
+                        <id>generate-audit-api</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <inputSpec>${project.basedir}/../ApiContract/openapi-auditoria.yaml</inputSpec>
+                            <generatorName>jaxrs-spec</generatorName>
+                            <apiPackage>com.floatops.resource.generated</apiPackage>
+                            <modelPackage>com.floatops.dto.generated</modelPackage>
+                            <configOptions>
+                                <interfaceOnly>true</interfaceOnly>
+                                <useSwaggerAnnotations>false</useSwaggerAnnotations>
+                                <useJakartaEe>true</useJakartaEe>
+                                <dateLibrary>java8</dateLibrary>
+                            </configOptions>
+                        </configuration>
+                    </execution>
+                    <!-- TODO: repetir un <execution> por cada uno de los otros 9
                          .yaml en ../ApiContract/, cambiando id, inputSpec y packages -->
                 </executions>
             </plugin>
@@ -211,11 +248,22 @@
                 <artifactId>jacoco-maven-plugin</artifactId>
                 <version>0.8.12</version>
                 <executions>
+                    <!-- destFile/exclClassLoaders coordinados con quarkus-jacoco
+                         (ver dependencia y src/test/resources/application.properties):
+                         el javaagent instrumenta lo que corre fuera de un
+                         @QuarkusTest, quarkus-jacoco instrumenta lo que corre
+                         dentro, y ambos escriben (append=true) al mismo
+                         jacoco-quarkus.exec para que el reporte quede completo. -->
                     <execution>
                         <id>prepare-agent</id>
                         <goals>
                             <goal>prepare-agent</goal>
                         </goals>
+                        <configuration>
+                            <destFile>${project.build.directory}/jacoco-quarkus.exec</destFile>
+                            <append>true</append>
+                            <exclClassLoaders>*QuarkusClassLoader</exclClassLoaders>
+                        </configuration>
                     </execution>
                     <execution>
                         <id>report</id>
@@ -223,6 +271,13 @@
                         <goals>
                             <goal>report</goal>
                         </goals>
+                        <configuration>
+                            <dataFile>${project.build.directory}/jacoco-quarkus.exec</dataFile>
+                            <excludes>
+                                <exclude>com/floatops/dto/generated/**</exclude>
+                                <exclude>com/floatops/dto/workorder/**</exclude>
+                            </excludes>
+                        </configuration>
                     </execution>
                     <execution>
                         <id>check</id>
@@ -230,6 +285,17 @@
                             <goal>check</goal>
                         </goals>
                         <configuration>
+                            <dataFile>${project.build.directory}/jacoco-quarkus.exec</dataFile>
+                            <!-- com.floatops.dto.generated.* son getters/setters/equals/hashCode
+                                 generados por openapi-generator (RNF-007 mide codigo nuestro, no
+                                 boilerplate generado). com.floatops.dto.workorder.* es un paquete
+                                 legacy sin ninguna referencia en el resto del codigo (reemplazado
+                                 por dto.generated) - se excluye en vez de borrarse por si el
+                                 modulo de Ordenes de Trabajo original lo necesita mas adelante. -->
+                            <excludes>
+                                <exclude>com/floatops/dto/generated/**</exclude>
+                                <exclude>com/floatops/dto/workorder/**</exclude>
+                            </excludes>
                             <rules>
                                 <rule>
                                     <element>BUNDLE</element>

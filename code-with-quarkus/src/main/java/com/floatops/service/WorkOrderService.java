@@ -29,6 +29,9 @@ public class WorkOrderService {
     // exista el modulo de Administracion. Hardcodeado hasta entonces.
     private static final BigDecimal UMBRAL_ALTO_VALOR = new BigDecimal("2000000");
 
+    @Inject
+    AuditService auditService;
+
     @Transactional
     public WorkOrder crear(WorkOrderCreate dto) {
         com.floatops.entity.Vehicle vehicle = com.floatops.entity.Vehicle.findById(dto.getVehicleId());
@@ -87,7 +90,7 @@ public class WorkOrderService {
         wo.persist();
 
         // TODO (RF-026): NotificationService.enviar(...)
-        // TODO (RF-027): AuditService.registrar(...)
+        auditService.registrar("WorkOrder", wo.id, "creacion", null, "Orden creada");
 
         return toApiWorkOrder(wo);
     }
@@ -146,10 +149,11 @@ public class WorkOrderService {
                     Response.Status.CONFLICT);
         }
 
+        String etapaAnterior = wo.stage.nombre;
         wo.stage = nuevaEtapa;
 
         // TODO (RF-026): NotificationService.enviar(...)
-        // TODO (RF-027): AuditService.registrar(...)
+        auditService.registrar("WorkOrder", wo.id, "etapa", etapaAnterior, nuevaEtapa.nombre);
 
         return toApiWorkOrder(wo);
     }
@@ -164,9 +168,11 @@ public class WorkOrderService {
         if (technician == null) {
             throw new WebApplicationException("Tecnico no encontrado", Response.Status.BAD_REQUEST);
         }
+        String tecnicoAnterior = wo.technician != null ? wo.technician.nombre : "Sin asignar";
         wo.technician = technician;
 
-        // TODO (RF-026/RF-027): notificacion y auditoria de la reasignacion
+        // TODO (RF-026): notificacion de la reasignacion
+        auditService.registrar("WorkOrder", wo.id, "tecnico", tecnicoAnterior, technician.nombre);
 
         return toApiWorkOrder(wo);
     }
@@ -188,14 +194,18 @@ public class WorkOrderService {
             throw new WebApplicationException("Error leyendo el archivo", Response.Status.BAD_REQUEST);
         }
 
+        // NOTA: se usa la sobrecarga con Consumer<Builder> (en vez de
+        // encadenar .build() nosotros mismos) porque el compilador de
+        // Eclipse/ECJ resuelve mal el build() heredado a la vez de
+        // S3Request.Builder y CopyableBuilder en esta jerarquia de tipos
+        // del SDK de AWS (covariant return ambiguo) y produce una clase
+        // rota en tiempo de ejecucion bajo ciertas herramientas basadas en
+        // ECJ. javac lo resuelve bien, pero esta forma evita el problema
+        // de raiz sin depender de que compilador se use.
         String key = workOrderId + "/" + UUID.randomUUID();
         s3Client.putObject(
-                software.amazon.awssdk.services.s3.model.PutObjectRequest.builder()
-                        .bucket(com.floatops.shared.S3BucketInitializer.PHOTOS_BUCKET)
-                        .key(key)
-                        .build(),
-                software.amazon.awssdk.core.sync.RequestBody.fromBytes(bytes)
-        );
+                b -> b.bucket(com.floatops.shared.S3BucketInitializer.PHOTOS_BUCKET).key(key),
+                software.amazon.awssdk.core.sync.RequestBody.fromBytes(bytes));
 
         com.floatops.entity.Photo photo = new com.floatops.entity.Photo();
         photo.workOrder = wo;
@@ -239,7 +249,9 @@ public class WorkOrderService {
         if (wo == null) {
             throw new NotFoundException("Orden no encontrada");
         }
+        boolean anterior = wo.cotizacionAprobadaCliente;
         wo.cotizacionAprobadaCliente = true;
+        auditService.registrar("WorkOrder", wo.id, "cotizacionAprobadaCliente", anterior, true);
         return toApiWorkOrder(wo);
     }
 
@@ -249,7 +261,9 @@ public class WorkOrderService {
         if (wo == null) {
             throw new NotFoundException("Orden no encontrada");
         }
+        Boolean anterior = wo.cotizacionAprobadaSupervisor;
         wo.cotizacionAprobadaSupervisor = true;
+        auditService.registrar("WorkOrder", wo.id, "cotizacionAprobadaSupervisor", anterior, true);
         return toApiWorkOrder(wo);
     }
 
@@ -259,7 +273,9 @@ public class WorkOrderService {
         if (item == null || !item.workOrder.id.equals(workOrderId)) {
             throw new NotFoundException("Item de checklist no encontrado en esta orden");
         }
+        boolean anterior = item.completado;
         item.completado = Boolean.TRUE.equals(completado);
+        auditService.registrar("WorkOrder", workOrderId, "checklist:" + item.descripcion, anterior, item.completado);
         return toApiChecklistItem(item);
     }
 

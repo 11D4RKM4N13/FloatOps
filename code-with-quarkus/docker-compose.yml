@@ -30,10 +30,11 @@ services:
       - ./keycloak/floatops-realm.json:/opt/keycloak/data/import/floatops-realm.json:ro
 
   quarkus-api:
-    # Monorepo: docker-compose.yml vive en la raiz, el proyecto Quarkus
-    # esta en ./backend (renombrado de code-with-quarkus).
+    # docker-compose.yml vive junto al pom.xml del proyecto Quarkus (no en
+    # la raiz del monorepo, y el proyecto no se renombro a ./backend), asi
+    # que el build context es este mismo directorio.
     build:
-      context: ./backend
+      context: .
       dockerfile: src/main/docker/Dockerfile.jvm
     container_name: floatops-api
     depends_on:
@@ -49,6 +50,27 @@ services:
       QUARKUS_DATASOURCE_PASSWORD: floatops
       QUARKUS_OIDC_AUTH_SERVER_URL: http://keycloak:8080/realms/floatops
       QUARKUS_OIDC_CLIENT_ID: floatops-api
+      # Keycloak estampa el "iss" del token con el host/puerto que el
+      # cliente uso para pedirlo. Cualquiera que pida un token desde fuera
+      # de la red de Docker (navegador via Swagger UI, curl/Postman desde
+      # el host) lo hace por localhost:8081, asi que el token trae
+      # iss=http://localhost:8081/realms/floatops - pero por defecto la API
+      # espera que coincida con QUARKUS_OIDC_AUTH_SERVER_URL de arriba
+      # (keycloak:8080) y rechaza el token con "Issuer claim doesn't match".
+      # Fijamos el issuer esperado al valor real que traen esos tokens.
+      QUARKUS_OIDC_TOKEN_ISSUER: http://localhost:8081/realms/floatops
+      # La config de S3 en application.properties esta bajo %dev (solo
+      # aplica en quarkus:dev fuera de Docker), asi que este contenedor
+      # (perfil prod) necesita la suya propia via variables de entorno -
+      # mismo patron que el datasource y OIDC de arriba. "minio", no
+      # localhost, porque este contenedor habla con el de al lado por la
+      # red interna de docker-compose, no por los puertos mapeados al host.
+      QUARKUS_S3_ENDPOINT_OVERRIDE: http://minio:9000
+      QUARKUS_S3_AWS_REGION: us-east-1
+      QUARKUS_S3_AWS_CREDENTIALS_TYPE: static
+      QUARKUS_S3_AWS_CREDENTIALS_STATIC_PROVIDER_ACCESS_KEY_ID: floatops
+      QUARKUS_S3_AWS_CREDENTIALS_STATIC_PROVIDER_SECRET_ACCESS_KEY: floatops123
+      QUARKUS_S3_PATH_STYLE_ACCESS: "true"
     ports:
       - "8080:8080"
 
