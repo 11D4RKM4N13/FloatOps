@@ -192,6 +192,8 @@
                             </configOptions>
                         </configuration>
                     </execution>
+                    <!-- TODO: repetir un <execution> por cada uno de los otros 9
+                         .yaml en ../ApiContract/, cambiando id, inputSpec y packages -->
                     <execution>
                         <id>generate-audit-api</id>
                         <goals>
@@ -210,8 +212,42 @@
                             </configOptions>
                         </configuration>
                     </execution>
-                    <!-- TODO: repetir un <execution> por cada uno de los otros 9
-                         .yaml en ../ApiContract/, cambiando id, inputSpec y packages -->
+                    <execution>
+                        <id>generate-vehiculos-api</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <inputSpec>${project.basedir}/../ApiContract/openapi-vehiculos.yaml</inputSpec>
+                            <generatorName>jaxrs-spec</generatorName>
+                            <apiPackage>com.floatops.resource.generated</apiPackage>
+                            <modelPackage>com.floatops.dto.generated</modelPackage>
+                            <configOptions>
+                                <interfaceOnly>true</interfaceOnly>
+                                <useSwaggerAnnotations>false</useSwaggerAnnotations>
+                                <useJakartaEe>true</useJakartaEe>
+                                <dateLibrary>java8</dateLibrary>
+                            </configOptions>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>generate-tecnicos-api</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <inputSpec>${project.basedir}/../ApiContract/openapi-tecnicos.yaml</inputSpec>
+                            <generatorName>jaxrs-spec</generatorName>
+                            <apiPackage>com.floatops.resource.generated</apiPackage>
+                            <modelPackage>com.floatops.dto.generated</modelPackage>
+                            <configOptions>
+                                <interfaceOnly>true</interfaceOnly>
+                                <useSwaggerAnnotations>false</useSwaggerAnnotations>
+                                <useJakartaEe>true</useJakartaEe>
+                                <dateLibrary>java8</dateLibrary>
+                            </configOptions>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
 
